@@ -15,4 +15,9 @@ public class HomeController {
         model.addAttribute("username", username);
         return "home"; // Va a buscar templates/home.html
     }
+
+    @GetMapping("/")
+    public String home() {
+        return "home";  // Aquí se decide el template llamado "index.html"
+    }
 }
