@@ -2,78 +2,11 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>Chat en tiempo real</title>
     <link rel="stylesheet" href="/css/styles.css">
     <style>
-        .chat-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .messages {
-            height: 400px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #f9f9f9;
-        }
-
-        .message {
-            margin-bottom: 10px;
-            padding: 8px 15px;
-            border-radius: 18px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        .my-message {
-            background: #dcf8c6;
-            margin-left: auto;
-            border-radius: 18px 18px 0 18px;
-        }
-
-        .other-message {
-            background: #f1f0f0;
-            margin-right: auto;
-            border-radius: 18px 18px 18px 0;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 10px;
-        }
-
-        #messageInput {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        #sendButton {
-            padding: 10px 20px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        #sendButton:hover {
-            background: #0069d9;
-        }
-
-        .user-info {
-            font-size: 12px;
-            color: #777;
-            margin-bottom: 2px;
-        }
+        /* … tus estilos existentes … */
     </style>
 </head>
 <body>
@@ -90,7 +23,6 @@
 <main>
     <div class="chat-container">
         <div id="messages" class="messages"></div>
-
         <div class="input-container">
             <input type="text" id="messageInput" placeholder="Escribe un mensaje..." autocomplete="off">
             <button id="sendButton">Enviar</button>
@@ -99,105 +31,69 @@
 </main>
 
 <script th:inline="javascript">
-    // Obtener el nombre del usuario actual desde Thymeleaf
+    // Nombre de usuario inyectado por Thymeleaf
     const username = [[${#authentication.principal.username}]];
 
-    // Establecer la conexión WebSocket
-    const socket = new WebSocket('ws://' + window.location.host + '/ws');
+    // ¡Aquí está el cambio clave!
+    // Antes: ws://' + window.location.host + '/ws'
+    // Ahora apuntamos directo al servidor JavaFX:
+    const socket = new WebSocket('ws://26.149.149.83:8081/ws');
 
-    // Elementos del DOM
     const messagesContainer = document.getElementById('messages');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
+    const messageInput       = document.getElementById('messageInput');
+    const sendButton         = document.getElementById('sendButton');
 
-    // Evento cuando se establece la conexión
-    socket.onopen = function(event) {
-        addSystemMessage('Conectado al servidor de chat');
-    };
-
-    // Evento cuando se recibe un mensaje
-    socket.onmessage = function(event) {
-        // Parsear el mensaje JSON recibido
+    socket.onopen = () => addSystemMessage('Conectado al servidor de chat (JavaFX)');
+    socket.onmessage = (evt) => {
         try {
-            const messageObj = JSON.parse(event.data);
-            displayMessage(messageObj.sender, messageObj.content, messageObj.timestamp);
-        } catch (e) {
-            // Si no es JSON, mostrar como texto simple
-            addSystemMessage('Mensaje recibido: ' + event.data);
+            const msg = JSON.parse(evt.data);
+            displayMessage(msg.sender, msg.content, msg.timestamp);
+        } catch {
+            addSystemMessage('Mensaje recibido: ' + evt.data);
         }
     };
-
-    // Evento cuando se cierra la conexión
-    socket.onclose = function(event) {
-        addSystemMessage('Desconectado del servidor');
-    };
-
-    // Evento de error
-    socket.onerror = function(error) {
+    socket.onclose = () => addSystemMessage('Desconectado del servidor');
+    socket.onerror = (err) => {
         addSystemMessage('Error en la conexión');
-        console.error('Error WebSocket:', error);
+        console.error('WebSocket error:', err);
     };
 
-    // Enviar mensaje cuando se hace clic en el botón
     sendButton.addEventListener('click', sendMessage);
-
-    // Enviar mensaje al presionar Enter
-    messageInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
+    messageInput.addEventListener('keypress', e => {
+        if (e.key === 'Enter') sendMessage();
     });
 
-    // Función para enviar mensajes
     function sendMessage() {
-        const messageText = messageInput.value.trim();
-
-        if (messageText === '') return;
-
-        // Crear objeto de mensaje
-        const messageObj = {
+        const text = messageInput.value.trim();
+        if (!text) return;
+        const msgObj = {
             sender: username,
-            content: messageText,
+            content: text,
             timestamp: new Date().toISOString()
         };
-
-        // Enviar como JSON
-        socket.send(JSON.stringify(messageObj));
-
-        // Limpiar el campo de entrada
+        socket.send(JSON.stringify(msgObj));
         messageInput.value = '';
     }
 
-    // Función para mostrar un mensaje en el chat
     function displayMessage(sender, text, timestamp) {
-        const messageDiv = document.createElement('div');
-        const userInfoDiv = document.createElement('div');
-        const date = new Date(timestamp);
-        const timeString = date.toLocaleTimeString();
-
-        userInfoDiv.className = 'user-info';
-        userInfoDiv.textContent = sender + ' • ' + timeString;
-
-        messageDiv.className = 'message ' + (sender === username ? 'my-message' : 'other-message');
-        messageDiv.appendChild(userInfoDiv);
-        messageDiv.appendChild(document.createTextNode(text));
-
-        messagesContainer.appendChild(messageDiv);
-
-        // Desplazarse al último mensaje
+        const msgDiv  = document.createElement('div');
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'user-info';
+        const timeStr = new Date(timestamp).toLocaleTimeString();
+        infoDiv.textContent = `${sender} • ${timeStr}`;
+        msgDiv.className = 'message ' + (sender === username ? 'my-message' : 'other-message');
+        msgDiv.appendChild(infoDiv);
+        msgDiv.appendChild(document.createTextNode(text));
+        messagesContainer.appendChild(msgDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // Función para añadir mensaje del sistema
-    function addSystemMessage(text) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message system-message';
-        messageDiv.style.textAlign = 'center';
-        messageDiv.style.color = '#888';
-        messageDiv.style.fontStyle = 'italic';
-        messageDiv.appendChild(document.createTextNode(text));
-
-        messagesContainer.appendChild(messageDiv);
+    function addSystemMessage(txt) {
+        const div = document.createElement('div');
+        div.className = 'message system-message';
+        div.style.cssText = 'text-align:center;color:#888;font-style:italic';
+        div.textContent = txt;
+        messagesContainer.appendChild(div);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 </script>
