@@ -2,6 +2,9 @@ package com.admin.remoto.websocket;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -9,6 +12,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class MyWebSocketHandler extends TextWebSocketHandler {
 
     private static final Set<WebSocketSession> sessions = new HashSet<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -30,7 +34,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, org.springframework.web.socket.CloseStatus status) throws Exception {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         sessions.remove(session);
         System.out.println("Cliente desconectado: " + session.getId());
     }
