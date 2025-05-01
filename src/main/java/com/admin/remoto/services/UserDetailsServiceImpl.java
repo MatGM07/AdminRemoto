@@ -19,12 +19,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepositorio.findByCorreo(username)
+        Usuario usuario = usuarioRepositorio.findByNombre(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con correo: " + username));
 
         // Importante: usa roles o authorities según tu necesidad
         return User.builder()
-                .username(usuario.getCorreo())
+                .username(usuario.getNombre())
                 .password(usuario.getContraseña())
                 .roles("USER") // Puedes añadir roles desde la base de datos si los tienes
                 .build();
