@@ -5,18 +5,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.net.URI;
-
+import java.nio.ByteBuffer;
 
 public class EnvioComandos extends JFrame {
+    private final JLabel imageLabel = new JLabel();
+
     private final JTextArea logArea = new JTextArea(15, 60);
     private WebSocketClient socket;
     private ObjectMapper mapper = new ObjectMapper();
     private String serverHost;
     private int serverPort;
+
+    // Buffer para recibir datos binarios de la imagen
+    private ByteBuffer imageBuffer;
 
     public EnvioComandos(String host, int port) throws Exception {
         super("Cliente de Control Remoto - " + host + ":" + port);
@@ -24,8 +32,7 @@ public class EnvioComandos extends JFrame {
         this.serverPort = port;
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        logArea.setEditable(false);
-        getContentPane().add(new JScrollPane(logArea), BorderLayout.CENTER);
+
 
         // Botón para desconectar y volver a la lista de servidores
         JButton backButton = new JButton("Volver a la lista de servidores");
@@ -50,6 +57,11 @@ public class EnvioComandos extends JFrame {
         });
         getContentPane().add(backButton, BorderLayout.SOUTH);
 
+        JScrollPane imagePane = new JScrollPane(imageLabel);
+        imagePane.setPreferredSize(new Dimension(1024, 768)); // tamaño inicial
+        getContentPane().add(imagePane, BorderLayout.CENTER);
+
+
         pack();
         setLocationRelativeTo(null);
         setVisible(true);
@@ -62,15 +74,30 @@ public class EnvioComandos extends JFrame {
                 public void onOpen(ServerHandshake sh) {
                     log("SOCKET", "Conectado al servidor");
                 }
+
                 @Override
                 public void onMessage(String msg) {
-                    // si quisieras procesar respuestas del servidor...
+                    // Procesar mensajes de texto del servidor
                     log("SOCKET-RX", msg);
                 }
+
+                @Override
+                public void onMessage(ByteBuffer bytes) {
+                    // Procesar mensajes binarios (imágenes) del servidor
+                    try {
+                        log("SOCKET-IMG", "Recibida imagen de " + bytes.remaining() + " bytes");
+                        displayImage(bytes);
+                    } catch (Exception e) {
+                        log("ERROR-IMG", "Error al procesar imagen: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
                     log("SOCKET", "Cerrado: " + reason);
                 }
+
                 @Override
                 public void onError(Exception ex) {
                     log("SOCKET-ERR", ex.getMessage());
@@ -136,11 +163,48 @@ public class EnvioComandos extends JFrame {
         }, mask);
     }
 
+    /**
+     * Muestra la imagen recibida en el JLabel
+     * @param buffer ByteBuffer con los datos binarios de la imagen JPG
+     */
+    private void displayImage(ByteBuffer buffer) {
+        try {
+            byte[] imageData = new byte[buffer.remaining()];
+            buffer.get(imageData);
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(imageData);
+            BufferedImage img = ImageIO.read(bis);
+            bis.close();
+
+            if (img != null) {
+                SwingUtilities.invokeLater(() -> {
+                    // Obtener el tamaño disponible del JScrollPane
+                    Dimension panelSize = getContentPane().getSize();
+
+                    // Escalar imagen al tamaño disponible (restando espacio del botón y bordes)
+                    int maxWidth = panelSize.width - 40;
+                    int maxHeight = panelSize.height - 100;
+
+                    Image scaled = img.getScaledInstance(
+                            maxWidth, maxHeight, Image.SCALE_SMOOTH);
+
+                    imageLabel.setIcon(new ImageIcon(scaled));
+                    imageLabel.setPreferredSize(new Dimension(maxWidth, maxHeight));
+                    imageLabel.revalidate();
+                });
+            } else {
+                log("ERROR-IMG", "No se pudo decodificar la imagen recibida");
+            }
+        } catch (Exception e) {
+            log("ERROR-IMG", "Error al procesar imagen: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void log(String prefix, String msg) {
         SwingUtilities.invokeLater(() -> {
             logArea.append(String.format("[%s] %s%n", prefix, msg));
             logArea.setCaretPosition(logArea.getDocument().getLength());
         });
     }
-
 }
