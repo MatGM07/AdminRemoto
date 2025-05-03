@@ -1,7 +1,7 @@
 package com.admin.remoto.swing;
 
 import com.admin.remoto.dto.LoginResult;
-import com.admin.remoto.services.LoginService;
+import com.admin.remoto.swing.service.LoginService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,6 +25,8 @@ public class LoginPanel extends JPanel {
     private static final String LOGIN_URL = "http://localhost:8080/login";
 
     public LoginPanel() {
+        loginService= new LoginService(LOGIN_URL);
+
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4, 4, 4, 4);
@@ -86,6 +88,9 @@ public class LoginPanel extends JPanel {
     private void realizarLogin() {
         String nombre = nombreField.getText();
         String contrasena = new String(passwordField.getPassword());
+
+        if (this.loginService == null)
+            System.out.println("LoginService no está inicializado");
 
         if (nombre.isEmpty() || contrasena.isEmpty()) {
             messageLabel.setText("Por favor, introduce correo y contraseña");

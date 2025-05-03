@@ -1,15 +1,10 @@
 package com.admin.remoto.swing;
 
 import com.admin.remoto.dto.RegisterResult;
-import com.admin.remoto.services.RegisterService;
+import com.admin.remoto.swing.service.RegisterService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 public class RegisterPanel extends JPanel {
 
