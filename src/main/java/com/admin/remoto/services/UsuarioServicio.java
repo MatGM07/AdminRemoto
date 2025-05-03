@@ -24,7 +24,7 @@ public class UsuarioServicio {
         usuarioRepositorio.save(usuario);
     }
 
-    public Optional<Usuario> encontrarPorNombre(String correo) {
-        return usuarioRepositorio.findByNombre(correo);
+    public Optional<Usuario> encontrarPorNombre(String nombre) {
+        return usuarioRepositorio.findByNombre(nombre);
     }
 }
