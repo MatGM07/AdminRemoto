@@ -74,18 +74,15 @@ public class LoginPanel extends JPanel {
         });
 
     }
-
-    /** Establece callback para login exitoso */
+    
     public void setOnLoginSuccess(Runnable callback) {
         this.onLoginSuccess = callback;
     }
 
-    /** Establece callback cuando se solicita registro */
     public void setOnRegisterRequested(Runnable callback) {
         this.onRegisterRequested = callback;
     }
 
-    /** Ejecuta petición HTTP de login */
     private void realizarLogin() {
         String nombre = nombreField.getText();
         String contrasena = new String(passwordField.getPassword());

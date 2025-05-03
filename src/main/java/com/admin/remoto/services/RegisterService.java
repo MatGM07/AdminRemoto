@@ -1,5 +1,7 @@
 package com.admin.remoto.services;
 
+import com.admin.remoto.dto.RegisterResult;
+
 import javax.swing.*;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -15,9 +17,15 @@ public class RegisterService {
         this.registerUrl = registerUrl;
     }
 
-    public SwingWorker<Boolean, Void> registrar(String nombre, String contraseña, Runnable onSuccess, JLabel messageLabel, JButton registerButton) {
+    public SwingWorker<Boolean, Void> registrar(RegisterResult registerResult) {
         return new SwingWorker<>() {
             private String mensaje;
+
+            String nombre = registerResult.getNombre();
+            String contraseña = registerResult.getContrasena();
+            Runnable onSuccess = registerResult.getOnLoginSuccess();
+            JLabel messageLabel = registerResult.getMessageLabel();
+            JButton registerButton = registerResult.getLoginButton();
 
             @Override
             protected Boolean doInBackground() {
