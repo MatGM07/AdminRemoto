@@ -81,6 +81,11 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacv-platform</artifactId>
+			<version>1.5.9</version>
+		</dependency>
 	</dependencies>
 
 	<build>
