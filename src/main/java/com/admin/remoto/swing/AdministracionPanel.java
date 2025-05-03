@@ -1,11 +1,9 @@
 package com.admin.remoto.swing;
 
 import com.admin.remoto.models.Evento;
-import com.admin.remoto.services.SocketService;
 import com.admin.remoto.websocket.ClienteWebSocket;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -25,7 +23,6 @@ public class AdministracionPanel extends JFrame {
     private ObjectMapper mapper = new ObjectMapper();
     private String host;
     private int port;
-    private SocketService socketService;
 
     private ByteBuffer imageBuffer;
 
@@ -33,7 +30,6 @@ public class AdministracionPanel extends JFrame {
         super("Cliente de Control Remoto - " + host + ":" + port);
         this.host = host;
         this.port = port;
-        socketService = new SocketService();
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
