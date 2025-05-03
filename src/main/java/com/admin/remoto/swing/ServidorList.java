@@ -22,7 +22,7 @@ public class ServidorList extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Panel superior para agregar servidores
+
         JPanel topPanel = new JPanel(new BorderLayout(5, 0));
         serverAddressField = new JTextField(20);
         addServerButton = new JButton("Agregar servidor");
@@ -31,7 +31,6 @@ public class ServidorList extends JPanel {
         topPanel.add(addServerButton, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-        // Lista de servidores
         listModel = new DefaultListModel<>();
         serverList = new JList<>(listModel);
         serverList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -40,14 +39,12 @@ public class ServidorList extends JPanel {
         scrollPane.setPreferredSize(new Dimension(500, 300));
         add(scrollPane, BorderLayout.CENTER);
 
-        // Panel de botones
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         connectButton = new JButton("Conectar");
         deleteButton = new JButton("Eliminar");
         buttonPanel.add(connectButton);
         buttonPanel.add(deleteButton);
 
-        // Panel inferior con botones y mensajes
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(buttonPanel, BorderLayout.CENTER);
 
@@ -57,7 +54,6 @@ public class ServidorList extends JPanel {
 
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Cargar servidores guardados
         loadSavedServers();
 
         // Event listeners

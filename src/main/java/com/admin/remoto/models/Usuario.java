@@ -2,6 +2,9 @@ package com.admin.remoto.models;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -11,6 +14,9 @@ public class Usuario {
     private Long id;
     private String nombre;
     private String contraseña;
+
+    @ManyToMany(mappedBy = "usuarios")
+    private Set<Servidor> servidores = new HashSet<>();
 
 
     public Usuario(Long id, String nombre, String contraseña) {
