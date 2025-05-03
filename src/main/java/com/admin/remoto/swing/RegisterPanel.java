@@ -1,5 +1,6 @@
 package com.admin.remoto.swing;
 
+import com.admin.remoto.dto.RegisterResult;
 import com.admin.remoto.services.RegisterService;
 
 import javax.swing.*;
@@ -19,6 +20,7 @@ public class RegisterPanel extends JPanel {
     private JLabel messageLabel;
 
     private RegisterService registerService;
+    private RegisterResult registerResult;
 
     // Callbacks
     private Runnable onRegisterSuccess;
@@ -91,7 +93,9 @@ public class RegisterPanel extends JPanel {
         registerButton.setEnabled(false);
         messageLabel.setText("Registrando...");
 
-        SwingWorker<Boolean, Void> worker = registerService.registrar(nombre, contraseña, onRegisterSuccess, messageLabel, registerButton);
+        this.registerResult = new RegisterResult(nombre,contraseña,onRegisterSuccess,messageLabel,registerButton);
+
+        SwingWorker<Boolean, Void> worker = registerService.registrar(registerResult);
         worker.execute();
     }
 
