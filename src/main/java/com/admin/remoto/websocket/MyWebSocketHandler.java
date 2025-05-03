@@ -17,9 +17,6 @@ import javax.swing.*;
 public class MyWebSocketHandler extends TextWebSocketHandler {
 
     private static final Set<WebSocketSession> sessions = new HashSet<>();
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {

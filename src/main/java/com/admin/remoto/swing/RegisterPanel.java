@@ -1,5 +1,7 @@
 package com.admin.remoto.swing;
 
+import com.admin.remoto.services.RegisterService;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.OutputStream;
@@ -16,6 +18,8 @@ public class RegisterPanel extends JPanel {
     private JButton backButton;
     private JLabel messageLabel;
 
+    private RegisterService registerService;
+
     // Callbacks
     private Runnable onRegisterSuccess;
     private Runnable onBackToLogin;
@@ -24,6 +28,9 @@ public class RegisterPanel extends JPanel {
     private static final String REGISTER_URL = "http://localhost:8080/registro";
 
     public RegisterPanel() {
+
+        registerService = new RegisterService(REGISTER_URL);
+
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4,4,4,4);
@@ -74,9 +81,9 @@ public class RegisterPanel extends JPanel {
 
     private void realizarRegistro() {
         String nombre = nombreField.getText().trim();
-        String pass   = new String(passwordField.getPassword()).trim();
+        String contraseña = new String(passwordField.getPassword()).trim();
 
-        if (nombre.isEmpty() || pass.isEmpty()) {
+        if (nombre.isEmpty() || contraseña.isEmpty()) {
             messageLabel.setText("Debe completar todos los campos");
             return;
         }
@@ -84,65 +91,8 @@ public class RegisterPanel extends JPanel {
         registerButton.setEnabled(false);
         messageLabel.setText("Registrando...");
 
-        new SwingWorker<Boolean,Void>() {
-            private String mensaje;
-
-            @Override
-            protected Boolean doInBackground() throws Exception {
-                try {
-                    String body = "nombre=" + URLEncoder.encode(nombre, StandardCharsets.UTF_8)
-                            + "&contraseña=" + URLEncoder.encode(pass, StandardCharsets.UTF_8);
-
-                    URL url = new URL(REGISTER_URL);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setInstanceFollowRedirects(false);
-                    conn.setRequestMethod("POST");
-                    conn.setDoOutput(true);
-                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                    try (OutputStream os = conn.getOutputStream()) {
-                        os.write(body.getBytes(StandardCharsets.UTF_8));
-                    }
-
-                    int status = conn.getResponseCode();
-                    if (status == HttpURLConnection.HTTP_MOVED_TEMP
-                            || status == HttpURLConnection.HTTP_SEE_OTHER
-                            || status == HttpURLConnection.HTTP_MOVED_PERM) {
-                        String loc = conn.getHeaderField("Location");
-                        if (loc != null && loc.contains("/login")) {
-                            mensaje = "Registro exitoso. Vuelve a iniciar sesión.";
-                            return true;
-                        } else {
-                            mensaje = "Error desconocido al registrar";
-                            return false;
-                        }
-                    } else if (status == HttpURLConnection.HTTP_OK) {
-                        // Si no usas redirect, podrías leer el body.
-                        mensaje = "Respuesta OK, revisa UI web";
-                        return false;
-                    } else {
-                        mensaje = "Error del servidor: " + status;
-                        return false;
-                    }
-                } catch (Exception ex) {
-                    mensaje = "Fallo de conexión: " + ex.getMessage();
-                    return false;
-                }
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    boolean ok = get();
-                    messageLabel.setText(mensaje);
-                    if (ok && onRegisterSuccess != null) {
-                        onRegisterSuccess.run();
-                    }
-                } catch (Exception ex) {
-                    messageLabel.setText("Error interno: " + ex.getMessage());
-                } finally {
-                    registerButton.setEnabled(true);
-                }
-            }
-        }.execute();
+        SwingWorker<Boolean, Void> worker = registerService.registrar(nombre, contraseña, onRegisterSuccess, messageLabel, registerButton);
+        worker.execute();
     }
+
 }
