@@ -167,7 +167,13 @@ public class EnvioComandos extends JFrame {
      * Muestra la imagen recibida en el JLabel
      * @param buffer ByteBuffer con los datos binarios de la imagen JPG
      */
+    private long lastUpdateTime = 0;
+
     private void displayImage(ByteBuffer buffer) {
+        long now = System.currentTimeMillis();
+        if (now - lastUpdateTime < 100) return; // no más de 10 fps
+        lastUpdateTime = now;
+
         try {
             byte[] imageData = new byte[buffer.remaining()];
             buffer.get(imageData);
@@ -177,18 +183,18 @@ public class EnvioComandos extends JFrame {
             bis.close();
 
             if (img != null) {
+                Dimension panelSize = getContentPane().getSize();
+                int maxWidth = panelSize.width - 40;
+                int maxHeight = panelSize.height - 100;
+
+                Image scaled = img.getScaledInstance(
+                        maxWidth, maxHeight, Image.SCALE_SMOOTH);
+
+                ImageIcon icon = new ImageIcon(scaled);
+
+                // Solo esta parte en EDT (mínimo posible)
                 SwingUtilities.invokeLater(() -> {
-                    // Obtener el tamaño disponible del JScrollPane
-                    Dimension panelSize = getContentPane().getSize();
-
-                    // Escalar imagen al tamaño disponible (restando espacio del botón y bordes)
-                    int maxWidth = panelSize.width - 40;
-                    int maxHeight = panelSize.height - 100;
-
-                    Image scaled = img.getScaledInstance(
-                            maxWidth, maxHeight, Image.SCALE_SMOOTH);
-
-                    imageLabel.setIcon(new ImageIcon(scaled));
+                    imageLabel.setIcon(icon);
                     imageLabel.setPreferredSize(new Dimension(maxWidth, maxHeight));
                     imageLabel.revalidate();
                 });

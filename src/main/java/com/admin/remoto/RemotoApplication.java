@@ -47,25 +47,19 @@ public class RemotoApplication {
 					cardLayout.show(mainPanel, "login");
 					frame.setTitle("Control Remoto - Login");
 				});
-
-
-				// Configurar callback para cuando el login sea exitoso
 				loginPanel.setOnLoginSuccess(() -> {
 					cardLayout.show(mainPanel, "servers");
 					frame.setTitle("Control Remoto - Servidores");
 				});
-
 				loginPanel.setOnRegisterRequested(() -> {
 					cardLayout.show(mainPanel, "register");
 					frame.setTitle("Control Remoto - Registro");
 				});
 
-				// Agregar paneles al panel principal
 				mainPanel.add(loginPanel, "login");
 				mainPanel.add(serverListPanel, "servers");
 				mainPanel.add(registerPanel, "register");
 
-				// Mostrar el panel de login inicialmente
 				cardLayout.show(mainPanel, "login");
 
 				frame.getContentPane().add(mainPanel);
