@@ -145,7 +145,7 @@ public class ServidorList extends JPanel {
                 currentFrame.dispose();
 
                 // Pasar la información del servidor a la ventana de envío
-                new EnvioComandos(host, port);
+                new AdministracionPanel(host, port);
             } catch (Exception ex) {
                 statusLabel.setText("Error al conectar: " + ex.getMessage());
                 ex.printStackTrace();
