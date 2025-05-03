@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 
 public class LoginPanel extends JPanel {
 
-    private JTextField emailField;
+    private JTextField nombreField;
     private JPasswordField passwordField;
     private JButton loginButton;
     private JButton registerButton;           // Botón para ir a registro
@@ -31,13 +31,13 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(4, 4, 4, 4);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Campo correo
+        // Campo nombre
         gbc.gridx = 0;
         gbc.gridy = 0;
-        add(new JLabel("Correo:"), gbc);
-        emailField = new JTextField(20);
+        add(new JLabel("Nombre:"), gbc);
+        nombreField = new JTextField(20);
         gbc.gridx = 1;
-        add(emailField, gbc);
+        add(nombreField, gbc);
 
         // Campo contraseña
         gbc.gridx = 0;
@@ -101,10 +101,10 @@ public class LoginPanel extends JPanel {
 
     /** Ejecuta petición HTTP de login */
     private void realizarLogin() {
-        String correo = emailField.getText();
+        String nombre = nombreField.getText();
         String contrasena = new String(passwordField.getPassword());
 
-        if (correo.isEmpty() || contrasena.isEmpty()) {
+        if (nombre.isEmpty() || contrasena.isEmpty()) {
             messageLabel.setText("Por favor, introduce correo y contraseña");
             return;
         }
@@ -118,7 +118,7 @@ public class LoginPanel extends JPanel {
             @Override
             protected Boolean doInBackground() throws Exception {
                 try {
-                    String body = "username=" + URLEncoder.encode(correo, StandardCharsets.UTF_8)
+                    String body = "username=" + URLEncoder.encode(nombre, StandardCharsets.UTF_8)
                             + "&password=" + URLEncoder.encode(contrasena, StandardCharsets.UTF_8);
 
                     URL url = new URL(LOGIN_URL);
