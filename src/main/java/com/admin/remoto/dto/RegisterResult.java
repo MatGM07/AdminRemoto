@@ -9,7 +9,7 @@ public class RegisterResult {
     private JLabel messageLabel;
     private JButton registerButton;
 
-    public RegisterResult(String nombre, String contrasena, Runnable onLoginSuccess, JLabel messageLabel, JButton loginButton) {
+    public RegisterResult(String nombre, String contrasena, Runnable onLoginSuccess, JLabel messageLabel, JButton registerButton) {
         this.nombre = nombre;
         this.contrasena = contrasena;
         this.onRegisterSuccess = onLoginSuccess;

@@ -47,7 +47,7 @@ public class EnvioComandos extends JFrame {
             try {
                 JFrame frame = new JFrame("Control Remoto - Selección de Servidor");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.getContentPane().add(new ServidorList());
+                frame.getContentPane().add(new ServidorListPanel());
                 frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);

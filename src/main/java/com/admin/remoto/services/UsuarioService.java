@@ -1,14 +1,28 @@
 package com.admin.remoto.services;
 
+import com.admin.remoto.models.Servidor;
 import com.admin.remoto.models.Usuario;
 import com.admin.remoto.repositories.UsuarioRepositorio;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 
 import java.util.Optional;
 
 @Service
 public class UsuarioService {
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
     private final UsuarioRepositorio usuarioRepositorio;
     private final PasswordEncoder passwordEncoder;
@@ -18,10 +32,51 @@ public class UsuarioService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public void registrarUsuario(Usuario usuario) {
+    public Optional<Usuario> obtenerPorNombre(String nombre) {
+        return usuarioRepositorio.findByNombre(nombre);
+    }
 
+    public Usuario verificarCredenciales(String nombre, String contraseña) {
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(nombre, contraseña)
+            );
+
+            // Si la autenticación es exitosa, puedes obtener detalles del usuario
+            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+
+            // Opcional: busca el usuario real en tu base de datos si necesitas su ID u otros datos
+            return usuarioRepositorio.findByNombre(userDetails.getUsername()).get();
+
+        } catch (AuthenticationException ex) {
+            return null; // Credenciales inválidas
+        }
+    }
+
+    public boolean existeUsuario(String nombre) {
+        return usuarioRepositorio.existsByNombre(nombre);
+    }
+
+    public Optional<Usuario> obtenerPorId(Long id){
+        return usuarioRepositorio.findById(id);
+    }
+
+    public Usuario registrarUsuario(Usuario usuario) {
+        if (existeUsuario(usuario.getNombre())) {
+            throw new IllegalArgumentException("El nombre de usuario ya existe");
+        }
+
+        // Encriptar la contraseña antes de guardar
         usuario.setContraseña(passwordEncoder.encode(usuario.getContraseña()));
-        usuarioRepositorio.save(usuario);
+        return usuarioRepositorio.save(usuario);
+    }
+
+
+    public Usuario getUsuarioActual() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName(); // esto obtiene el username (por defecto, el nombre de usuario)
+        return usuarioRepositorio.findByNombre(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
     public Optional<Usuario> encontrarPorNombre(String nombre) {

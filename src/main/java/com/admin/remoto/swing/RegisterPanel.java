@@ -1,7 +1,10 @@
 package com.admin.remoto.swing;
 
 import com.admin.remoto.dto.RegisterResult;
+import com.admin.remoto.controller.RegisterController;
 import com.admin.remoto.services.RegisterService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,6 +14,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+@Component
 public class RegisterPanel extends JPanel {
 
     private JTextField nombreField;
@@ -19,20 +23,19 @@ public class RegisterPanel extends JPanel {
     private JButton backButton;
     private JLabel messageLabel;
 
-    private RegisterService registerService;
-    private RegisterResult registerResult;
-
-    // Callbacks
     private Runnable onRegisterSuccess;
     private Runnable onBackToLogin;
 
-    // URL de tu endpoint de registro
-    private static final String REGISTER_URL = "http://localhost:8080/registro";
+    private final RegisterController registerController;
 
-    public RegisterPanel() {
+    @Autowired
+    public RegisterPanel(RegisterController registerController) {
+        this.registerController = registerController;
+        iniciarUI();
+        registerController.setRegisterPanel(this);
+    }
 
-        registerService = new RegisterService(REGISTER_URL);
-
+    private void iniciarUI(){
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4,4,4,4);
@@ -73,6 +76,42 @@ public class RegisterPanel extends JPanel {
         });
     }
 
+    private void realizarRegistro() {
+        String nombre = nombreField.getText().trim();
+        String contraseña = new String(passwordField.getPassword()).trim();
+
+        if (nombre.isEmpty() || contraseña.isEmpty()) {
+            mostrarError("Debe completar todos los campos");
+            return;
+        }
+
+        setLoadingState(true);
+        registerController.registrarUsuario(nombre, contraseña);
+    }
+
+    public void mostrarError(String mensaje) {
+        SwingUtilities.invokeLater(() -> {
+            messageLabel.setText(mensaje);
+            messageLabel.setForeground(Color.RED);
+        });
+    }
+
+    public void setLoadingState(boolean loading) {
+        SwingUtilities.invokeLater(() -> {
+            registerButton.setEnabled(!loading);
+            backButton.setEnabled(!loading);
+            messageLabel.setText(loading ? "Registrando..." : "");
+        });
+    }
+
+
+    public void onRegistroExitoso() {
+        resetFields();
+        if (onRegisterSuccess != null) {
+            SwingUtilities.invokeLater(onRegisterSuccess::run);
+        }
+    }
+
     public void setOnRegisterSuccess(Runnable callback) {
         this.onRegisterSuccess = callback;
     }
@@ -81,22 +120,12 @@ public class RegisterPanel extends JPanel {
         this.onBackToLogin = callback;
     }
 
-    private void realizarRegistro() {
-        String nombre = nombreField.getText().trim();
-        String contraseña = new String(passwordField.getPassword()).trim();
 
-        if (nombre.isEmpty() || contraseña.isEmpty()) {
-            messageLabel.setText("Debe completar todos los campos");
-            return;
-        }
-
-        registerButton.setEnabled(false);
-        messageLabel.setText("Registrando...");
-
-        this.registerResult = new RegisterResult(nombre,contraseña,onRegisterSuccess,messageLabel,registerButton);
-
-        SwingWorker<Boolean, Void> worker = registerService.registrar(registerResult);
-        worker.execute();
+    public void resetFields() {
+        nombreField.setText("");
+        passwordField.setText("");
+        messageLabel.setText(" ");
+        registerButton.setEnabled(true);
     }
 
 }

@@ -15,15 +15,11 @@ public class Servidor {
     private String direccion;
     private String puerto;
 
-    public Servidor(Long id, String direccion, String puerto, Set<Usuario> usuarios) {
-        this.id = id;
-        this.direccion = direccion;
-        this.puerto = puerto;
-        this.usuarios = usuarios;
-    }
+    @ManyToOne
+    @JoinColumn(name = "usuario_id") // Clave foránea que referencia al usuario creador
+    private Usuario creador;
 
     public Servidor() {
-
     }
 
     public Long getId() {
@@ -50,19 +46,16 @@ public class Servidor {
         this.puerto = puerto;
     }
 
-    public Set<Usuario> getUsuarios() {
-        return usuarios;
+    public Usuario getUsuario() {
+        return creador;
     }
 
-    public void setUsuarios(Set<Usuario> usuarios) {
-        this.usuarios = usuarios;
+    public void setUsuario(Usuario creador) {
+        this.creador = creador;
     }
 
-    @ManyToMany
-    @JoinTable(
-            name = "usuario_servidor",
-            joinColumns = @JoinColumn(name = "servidor_id"),
-            inverseJoinColumns = @JoinColumn(name = "usuario_id")
-    )
-    private Set<Usuario> usuarios = new HashSet<>();
+    @Override
+    public String toString() {
+        return "Servidor: " + direccion + ":" + puerto;
+    }
 }

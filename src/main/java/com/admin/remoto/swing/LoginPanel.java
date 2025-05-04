@@ -1,11 +1,17 @@
 package com.admin.remoto.swing;
 
+import com.admin.remoto.controller.LoginController;
 import com.admin.remoto.dto.LoginResult;
+import com.admin.remoto.models.Usuario;
 import com.admin.remoto.services.LoginService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Optional;
 
+@Component
 public class LoginPanel extends JPanel {
 
     private JTextField nombreField;
@@ -13,24 +19,27 @@ public class LoginPanel extends JPanel {
     private JButton loginButton;
     private JButton registerButton;           // Botón para ir a registro
     private JLabel messageLabel;
-    private LoginResult loginResult;
-    private LoginService loginService;
 
+
+    private final LoginController loginController;
 
     // Callbacks
     private Runnable onLoginSuccess;
     private Runnable onRegisterRequested;     // Callback para petición de registro
 
-    // URL del servidor de autenticación
-    private static final String LOGIN_URL = "http://localhost:8080/login";
+    @Autowired
+    public LoginPanel(LoginController loginController) {
+        this.loginController = loginController;
+        iniciarUI();
+        loginController.setLoginPanel(this);
+    }
 
-    public LoginPanel() {
+    private void iniciarUI() {
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(4, 4, 4, 4);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Campo nombre
         gbc.gridx = 0;
         gbc.gridy = 0;
         add(new JLabel("Nombre:"), gbc);
@@ -65,16 +74,48 @@ public class LoginPanel extends JPanel {
         add(registerButton, gbc);
 
         // Listener de Login
+
         loginButton.addActionListener(e -> realizarLogin());
-        // Listener de Registro
         registerButton.addActionListener(e -> {
             if (onRegisterRequested != null) {
                 onRegisterRequested.run();
             }
         });
-
     }
-    
+
+    private void realizarLogin() {
+        String nombre = nombreField.getText();
+        String contrasena = new String(passwordField.getPassword());
+
+        if (nombre.isEmpty() || contrasena.isEmpty()) {
+            mostrarError("Por favor, introduce nombre y contraseña");
+            return;
+        }
+
+        setLoadingState(true);
+        loginController.autenticarUsuario(nombre, contrasena);
+    }
+
+    public void onLoginExitoso() {
+        if (onLoginSuccess != null) {
+            SwingUtilities.invokeLater(onLoginSuccess::run);
+        }
+    }
+
+    public void mostrarError(String mensaje) {
+        SwingUtilities.invokeLater(() -> {
+            messageLabel.setText(mensaje);
+            messageLabel.setForeground(Color.RED);
+        });
+    }
+
+    public void setLoadingState(boolean loading) {
+        SwingUtilities.invokeLater(() -> {
+            loginButton.setEnabled(!loading);
+            messageLabel.setText(loading ? "Conectando..." : "");
+        });
+    }
+
     public void setOnLoginSuccess(Runnable callback) {
         this.onLoginSuccess = callback;
     }
@@ -83,20 +124,10 @@ public class LoginPanel extends JPanel {
         this.onRegisterRequested = callback;
     }
 
-    private void realizarLogin() {
-        String nombre = nombreField.getText();
-        String contrasena = new String(passwordField.getPassword());
-
-        if (nombre.isEmpty() || contrasena.isEmpty()) {
-            messageLabel.setText("Por favor, introduce correo y contraseña");
-            return;
-        }
-        loginButton.setEnabled(false);
-        messageLabel.setText("Conectando...");
-
-        this.loginResult = new LoginResult(nombre,contrasena,onLoginSuccess,messageLabel,loginButton);
-
-        SwingWorker<Boolean, Void> worker = loginService.login(loginResult);
-        worker.execute();
+    public void resetFields() {
+        nombreField.setText("");
+        passwordField.setText("");
+        messageLabel.setText(" ");
+        loginButton.setEnabled(true);
     }
 }

@@ -2,9 +2,11 @@ package com.admin.remoto;
 
 import com.admin.remoto.swing.LoginPanel;
 import com.admin.remoto.swing.RegisterPanel;
-import com.admin.remoto.swing.ServidorList;
+import com.admin.remoto.swing.ServidorListPanel;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,8 +15,11 @@ import java.awt.*;
 public class RemotoApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(RemotoApplication.class, args);
+
 		System.setProperty("java.awt.headless", "false");
+		ConfigurableApplicationContext context = SpringApplication.run(RemotoApplication.class, args);
+
+
 		SwingUtilities.invokeLater(() -> {
 			try {
 				// Establecer Look and Feel
@@ -33,9 +38,21 @@ public class RemotoApplication {
 				JPanel mainPanel = new JPanel(cardLayout);
 
 				// Crear paneles
-				LoginPanel loginPanel = new LoginPanel();
-				ServidorList serverListPanel = new ServidorList();
-				RegisterPanel registerPanel = new RegisterPanel();
+				LoginPanel loginPanel = context.getBean(LoginPanel.class);
+				RegisterPanel registerPanel = context.getBean(RegisterPanel.class);
+
+				ServidorListPanel serverListPanel = context.getBean(ServidorListPanel.class);
+
+
+				serverListPanel.setOnLogoutRequested(() -> {
+					// Limpiar campos de login
+					loginPanel.resetFields();
+					// Mostrar panel de login
+					cardLayout.show(mainPanel, "login");
+					frame.setTitle("Control Remoto - Login");
+					// Cerrar sesión de Spring Security si es necesario
+					SecurityContextHolder.clearContext();
+				});
 
 
 
@@ -48,12 +65,23 @@ public class RemotoApplication {
 					frame.setTitle("Control Remoto - Login");
 				});
 				loginPanel.setOnLoginSuccess(() -> {
+					serverListPanel.actualizarServidores(); // Actualizar la lista al hacer login
 					cardLayout.show(mainPanel, "servers");
 					frame.setTitle("Control Remoto - Servidores");
 				});
 				loginPanel.setOnRegisterRequested(() -> {
+					registerPanel.resetFields();
 					cardLayout.show(mainPanel, "register");
 					frame.setTitle("Control Remoto - Registro");
+				});
+
+				serverListPanel.setOnLogoutRequested(() -> {
+					// Limpiar campos de login
+					loginPanel.resetFields();
+					// Mostrar panel de login
+					cardLayout.show(mainPanel, "login");
+					frame.setTitle("Control Remoto - Login");
+					// Aquí podrías también limpiar la sesión si es necesario
 				});
 
 				mainPanel.add(loginPanel, "login");

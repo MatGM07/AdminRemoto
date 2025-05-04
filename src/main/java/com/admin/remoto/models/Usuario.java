@@ -15,17 +15,11 @@ public class Usuario {
     private String nombre;
     private String contraseña;
 
-    @ManyToMany(mappedBy = "usuarios")
-    private Set<Servidor> servidores = new HashSet<>();
+    @OneToMany(mappedBy = "creador", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Servidor> servidoresCreados = new HashSet<>();
 
-
-    public Usuario(Long id, String nombre, String contraseña) {
-        this.id = id;
-        this.nombre = nombre;
-        this.contraseña = contraseña;
+    public Usuario() {
     }
-
-    public Usuario() {}
 
     public String getNombre() {
         return nombre;
@@ -49,5 +43,24 @@ public class Usuario {
 
     public void setContraseña(String contrasena) {
         this.contraseña = contrasena;
+    }
+
+    public Set<Servidor> getServidoresCreados() {
+        return servidoresCreados;
+    }
+
+    public void setServidoresCreados(Set<Servidor> servidoresCreados) {
+        this.servidoresCreados = servidoresCreados;
+    }
+
+    // Métodos helper para manejar la relación (opcional pero recomendado)
+    public void agregarServidor(Servidor servidor) {
+        servidor.setUsuario(this);
+        this.servidoresCreados.add(servidor);
+    }
+
+    public void removerServidor(Servidor servidor) {
+        servidor.setUsuario(null);
+        this.servidoresCreados.remove(servidor);
     }
 }
