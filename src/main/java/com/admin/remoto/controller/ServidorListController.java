@@ -2,6 +2,7 @@ package com.admin.remoto.controller;
 
 import com.admin.remoto.models.Servidor;
 import com.admin.remoto.services.ServidorListService;
+import com.admin.remoto.swing.AdministracionPanel;
 import com.admin.remoto.swing.ServidorListPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,27 +13,28 @@ import java.util.List;
 
 @Component
 public class ServidorListController {
-    private final ServidorListService servidorListService;
-    private ServidorListPanel servidorListPanel;
+    private final ServidorListService service;
+    private ServidorListPanel panel;
 
     @Autowired
-    public ServidorListController(ServidorListService servidorListService) {
-        this.servidorListService = servidorListService;
+    public ServidorListController(ServidorListService service) {
+        this.service = service;
     }
 
-    public void setServidorListPanel(ServidorListPanel servidorListPanel) {
-        this.servidorListPanel = servidorListPanel;
+    public void setPanel(ServidorListPanel panel) {
+        this.panel = panel;
     }
 
     public void cargarServidores() {
+        panel.setLoadingState(true);
         new SwingWorker<List<Servidor>, Void>() {
             private String errorMessage;
 
             @Override
             protected List<Servidor> doInBackground() {
                 try {
-                    return servidorListService.obtenerServidoresUsuario();
-                } catch (IllegalStateException ex) {
+                    return service.obtenerServidoresUsuario();
+                } catch (Exception ex) {
                     errorMessage = ex.getMessage();
                     return Collections.emptyList();
                 }
@@ -42,25 +44,32 @@ public class ServidorListController {
             protected void done() {
                 try {
                     List<Servidor> servidores = get();
-                    servidorListPanel.mostrarServidores(servidores);
+                    if (errorMessage != null) {
+                        panel.mostrarError(errorMessage);
+                    } else {
+                        panel.mostrarServidores(servidores);
+                    }
                 } catch (Exception ex) {
-                    servidorListPanel.mostrarError(errorMessage != null ? errorMessage : "Error al cargar servidores");
+                    panel.mostrarError("Error al cargar servidores: " + ex.getMessage());
+                } finally {
+                    panel.setLoadingState(false);
                 }
             }
         }.execute();
     }
 
     public void agregarServidor(String direccion) {
+        panel.setLoadingState(true);
         new SwingWorker<Servidor, Void>() {
             private String errorMessage;
 
             @Override
             protected Servidor doInBackground() {
                 try {
-                    String[] partes = direccion.split(":");
-                    String host = partes[0];
-                    String puerto = partes.length > 1 ? partes[1] : "8081";
-                    return servidorListService.agregarServidor(host, puerto);
+                    String[] parts = direccion.split(":");
+                    String host = parts[0];
+                    String puerto = parts.length > 1 ? parts[1] : "8081";
+                    return service.agregarServidor(host, puerto);
                 } catch (Exception ex) {
                     errorMessage = "Formato inválido o error al agregar: " + ex.getMessage();
                     return null;
@@ -72,74 +81,55 @@ public class ServidorListController {
                 try {
                     Servidor servidor = get();
                     if (servidor != null) {
-                        servidorListPanel.agregarServidorALista(servidor);
-                        servidorListPanel.mostrarMensaje("Servidor agregado: " + servidor.getDireccion());
+                        panel.agregarServidorALista(servidor);
+                        panel.mostrarMensaje("Servidor agregado: " + servidor.getDireccion() + ":" + servidor.getPuerto());
                     } else {
-                        servidorListPanel.mostrarError(errorMessage);
+                        panel.mostrarError(errorMessage);
                     }
                 } catch (Exception ex) {
-                    servidorListPanel.mostrarError("Error inesperado al agregar servidor");
+                    panel.mostrarError("Error inesperado al agregar servidor: " + ex.getMessage());
+                } finally {
+                    panel.setLoadingState(false);
                 }
             }
         }.execute();
     }
 
     public void eliminarServidor(Servidor servidor) {
+        panel.setLoadingState(true);
         new SwingWorker<Void, Void>() {
             private String errorMessage;
 
             @Override
             protected Void doInBackground() {
                 try {
-                    servidorListService.eliminarServidor(servidor.getId());
-                    return null;
+                    service.eliminarServidor(servidor.getId());
                 } catch (Exception ex) {
-                    errorMessage = "Error al eliminar servidor: " + ex.getMessage();
-                    return null;
+                    errorMessage = ex.getMessage();
                 }
+                return null;
             }
 
             @Override
             protected void done() {
-                try {
-                    get();
-                    servidorListPanel.eliminarServidorDeLista(servidor);
-                    servidorListPanel.mostrarMensaje("Servidor eliminado");
-                } catch (Exception ex) {
-                    servidorListPanel.mostrarError(errorMessage != null ? errorMessage : "Error al eliminar servidor");
+                if (errorMessage == null) {
+                    panel.eliminarServidorDeLista(servidor);
+                    panel.mostrarMensaje("Servidor eliminado");
+                } else {
+                    panel.mostrarError("Error al eliminar servidor: " + errorMessage);
                 }
+                panel.setLoadingState(false);
             }
         }.execute();
     }
 
-    public void conectarAServidor(Servidor servidor) {
-        new SwingWorker<Void, Void>() {
-            private String errorMessage;
-
-            @Override
-            protected Void doInBackground() {
-                try {
-                    servidorListService.conectarServidor(
-                            servidor.getDireccion(),
-                            Integer.parseInt(servidor.getPuerto())
-                    );
-                    return null;
-                } catch (Exception ex) {
-                    errorMessage = "Error al conectar: " + ex.getMessage();
-                    return null;
-                }
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                    servidorListPanel.mostrarMensaje("Conectado a " + servidor.getDireccion());
-                    servidorListPanel.abrirVentanaConexion();
-                } catch (Exception ex) {
-                    servidorListPanel.mostrarError(errorMessage);
-                }
-            }
-        }.execute();
+    public void conectarServidor(Servidor servidor) {
+        panel.setLoadingState(true);
+        // Abrimos inmediatamente el panel, sin bloquear aquí la conexión:
+        SwingUtilities.invokeLater(() -> {
+            panel.setLoadingState(false);              // quitamos el loading
+            panel.abrirVentanaConexion(servidor);      // abre adminPanel en nueva ventana
+        });
     }
+
 }

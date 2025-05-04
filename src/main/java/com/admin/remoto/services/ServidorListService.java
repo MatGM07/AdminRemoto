@@ -13,11 +13,15 @@ import java.util.List;
 public class ServidorListService {
     private final ServidorService servidorService;
     private final SessionManager sessionManager;
+    private final AdministracionService administracionService;
 
     @Autowired
-    public ServidorListService(ServidorService servidorService, SessionManager sessionManager) {
+    public ServidorListService(ServidorService servidorService,
+                               SessionManager sessionManager,
+                               AdministracionService administracionService) {
         this.servidorService = servidorService;
         this.sessionManager = sessionManager;
+        this.administracionService = administracionService;
     }
 
     public List<Servidor> obtenerServidoresUsuario() {
@@ -33,21 +37,19 @@ public class ServidorListService {
         if (current == null) {
             throw new IllegalStateException("No hay usuario autenticado");
         }
-
         Servidor nuevo = new Servidor();
         nuevo.setDireccion(host);
         nuevo.setPuerto(puerto);
         nuevo.setUsuario(current);
-
         return servidorService.guardar(nuevo);
     }
 
     public void eliminarServidor(Long servidorId) {
+        Usuario current = sessionManager.getUsuario();
+        if (current == null) {
+            throw new IllegalStateException("No hay usuario autenticado");
+        }
         servidorService.eliminarPorId(servidorId);
     }
 
-    public void conectarServidor(String host, int puerto) {
-        // Lógica para establecer conexión con servidor remoto
-        // (Podría moverse a un servicio separado)
-    }
 }
