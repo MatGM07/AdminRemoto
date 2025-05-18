@@ -17,7 +17,6 @@ public class LoginPanel extends JPanel {
     private JTextField nombreField;
     private JPasswordField passwordField;
     private JButton loginButton;
-    private JButton registerButton;           // Botón para ir a registro
     private JLabel messageLabel;
 
 
@@ -25,7 +24,6 @@ public class LoginPanel extends JPanel {
 
     // Callbacks
     private Runnable onLoginSuccess;
-    private Runnable onRegisterRequested;     // Callback para petición de registro
 
     @Autowired
     public LoginPanel(LoginController loginController) {
@@ -66,21 +64,9 @@ public class LoginPanel extends JPanel {
         gbc.gridx = 1;
         gbc.gridy = 3;
         add(messageLabel, gbc);
-
-        // Botón Registrarse
-        registerButton = new JButton("Registrarse");
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        add(registerButton, gbc);
-
         // Listener de Login
 
         loginButton.addActionListener(e -> realizarLogin());
-        registerButton.addActionListener(e -> {
-            if (onRegisterRequested != null) {
-                onRegisterRequested.run();
-            }
-        });
     }
 
     private void realizarLogin() {
@@ -120,9 +106,6 @@ public class LoginPanel extends JPanel {
         this.onLoginSuccess = callback;
     }
 
-    public void setOnRegisterRequested(Runnable callback) {
-        this.onRegisterRequested = callback;
-    }
 
     public void resetFields() {
         nombreField.setText("");

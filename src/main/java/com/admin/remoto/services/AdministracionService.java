@@ -1,7 +1,7 @@
 package com.admin.remoto.services;
 
-import com.admin.remoto.models.Evento;
 import com.admin.remoto.controller.AdministracionController;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -17,6 +17,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 
 @Service
@@ -89,12 +91,17 @@ public class AdministracionService {
     }
 
     /**
-     * Envía un evento convertido a JSON
+     * Procesa un mensaje JSON recibido
      */
-    public void enviarEvento(Evento evento) throws Exception {
-        if (socket != null && socket.isOpen()) {
-            String json = mapper.writeValueAsString(evento);
-            socket.send(json);
+    public Map<String, String> procesarMensajeJson(String json) {
+        try {
+            return mapper.readValue(json, new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            // Si no es un JSON válido, devolvemos un mapa con el mensaje original
+            Map<String, String> result = new HashMap<>();
+            result.put("type", "text");
+            result.put("message", json);
+            return result;
         }
     }
 

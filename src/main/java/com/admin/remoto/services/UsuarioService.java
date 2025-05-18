@@ -61,17 +61,6 @@ public class UsuarioService {
         return usuarioRepositorio.findById(id);
     }
 
-    public Usuario registrarUsuario(Usuario usuario) {
-        if (existeUsuario(usuario.getNombre())) {
-            throw new IllegalArgumentException("El nombre de usuario ya existe");
-        }
-
-        // Encriptar la contraseña antes de guardar
-        usuario.setContraseña(passwordEncoder.encode(usuario.getContraseña()));
-        return usuarioRepositorio.save(usuario);
-    }
-
-
     public Usuario getUsuarioActual() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName(); // esto obtiene el username (por defecto, el nombre de usuario)

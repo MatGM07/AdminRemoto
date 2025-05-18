@@ -2,7 +2,7 @@ package com.admin.remoto;
 
 import com.admin.remoto.swing.AdministracionPanel;
 import com.admin.remoto.swing.LoginPanel;
-import com.admin.remoto.swing.RegisterPanel;
+
 import com.admin.remoto.swing.ServidorListPanel;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -21,7 +21,6 @@ public class RemotoApplication {
 
 		SwingUtilities.invokeLater(() -> {
 			try {
-				// Establecer Look and Feel
 				try {
 					UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 				} catch (Exception e) {
@@ -38,7 +37,6 @@ public class RemotoApplication {
 
 				// Obtener instancias de los paneles
 				LoginPanel loginPanel = context.getBean(LoginPanel.class);
-				RegisterPanel registerPanel = context.getBean(RegisterPanel.class);
 				ServidorListPanel serverListPanel = context.getBean(ServidorListPanel.class);
 				AdministracionPanel administracionPanel = context.getBean(AdministracionPanel.class);
 
@@ -49,23 +47,6 @@ public class RemotoApplication {
 					frame.setTitle("Control Remoto - Servidores");
 				});
 
-				loginPanel.setOnRegisterRequested(() -> {
-					registerPanel.resetFields();
-					cardLayout.show(mainPanel, "register");
-					frame.setTitle("Control Remoto - Registro");
-				});
-
-				registerPanel.setOnBackToLogin(() -> {
-					cardLayout.show(mainPanel, "login");
-					frame.setTitle("Control Remoto - Login");
-				});
-
-				registerPanel.setOnRegisterSuccess(() -> {
-					loginPanel.resetFields();
-					cardLayout.show(mainPanel, "login");
-					frame.setTitle("Control Remoto - Login");
-					loginPanel.mostrarError(""); // Limpiar mensajes de error
-				});
 
 				serverListPanel.setOnLogoutRequested(() -> {
 					loginPanel.resetFields();
@@ -92,7 +73,6 @@ public class RemotoApplication {
 				// Agregar paneles principales
 				mainPanel.add(loginPanel, "login");
 				mainPanel.add(serverListPanel, "servers");
-				mainPanel.add(registerPanel, "register");
 				mainPanel.add(administracionPanel, "admin");
 
 				// Mostrar panel inicial

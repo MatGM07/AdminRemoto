@@ -1,7 +1,6 @@
 package com.admin.remoto.controller;
 
-import com.admin.remoto.EventoConverter;
-import com.admin.remoto.models.Evento;
+
 import com.admin.remoto.services.AdministracionService;
 import com.admin.remoto.swing.AdministracionPanel;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +12,15 @@ import java.awt.event.AWTEventListener;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
 
 @Component
 public class AdministracionController implements AdministracionService.Listener {
     private final AdministracionService service;
     private AdministracionPanel panel;
-    private AWTEventListener awtListener;
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 
     @Autowired
     public AdministracionController(AdministracionService service) {
@@ -51,74 +53,72 @@ public class AdministracionController implements AdministracionService.Listener 
                     panel.volverAListaServidores();
                 } else {
                     panel.mostrarMensaje("Conectado a " + host + ":" + port);
-                    registerAWTListener();
                 }
             }
         }.execute();
     }
 
-    /**
-     * Registra el listener AWT en el UI y delega eventos al controlador
-     */
-    private void registerAWTListener() {
-        long mask = AWTEvent.KEY_EVENT_MASK |
-                AWTEvent.MOUSE_EVENT_MASK |
-                AWTEvent.MOUSE_MOTION_EVENT_MASK |
-                AWTEvent.MOUSE_WHEEL_EVENT_MASK;
-        awtListener = event -> manejarEventoAWT((AWTEvent) event);
-        Toolkit.getDefaultToolkit().addAWTEventListener(awtListener, mask);
-    }
-
     public void desconectar() {
         service.desconectar();
-        if (awtListener != null) {
-            Toolkit.getDefaultToolkit().removeAWTEventListener(awtListener);
-        }
-    }
-
-    /**
-     * Captura eventos AWT, los convierte y los envía al servidor
-     */
-    public void manejarEventoAWT(AWTEvent event) {
-        try {
-            Evento re = EventoConverter.convert(event);
-            if (re != null) {
-                service.enviarEvento(re);
-                panel.log("TX-EVT", re.toString());
-            }
-        } catch (Exception ex) {
-            panel.log("ERROR-EVT", ex.getMessage());
-        }
     }
 
     // --- Implementación de la interfaz Listener ---
     @Override
     public void onOpen() {
-        panel.mostrarMensaje("WebSocket abierto");
+        panel.mostrarMensaje("WebSocket abierto - Esperando datos del cliente...");
     }
 
     @Override
     public void onTextMessage(String message) {
-        panel.log("RX-TXT", message);
+        try {
+            // Procesar el mensaje como JSON
+            Map<String, String> jsonMsg = service.procesarMensajeJson(message);
+
+            if (jsonMsg.containsKey("type") && "log".equals(jsonMsg.get("type"))) {
+                // Es un mensaje de log del WindowTracker
+                String logMessage = jsonMsg.get("message");
+                panel.log("LOG", logMessage);
+
+                // También lo enviamos a la consola del servidor
+                System.out.println(logMessage);
+            } else {
+                // Es otro tipo de mensaje de texto
+                String now = timeFormat.format(new Date());
+                panel.log("MSG " + now, message);
+            }
+        } catch (Exception e) {
+            // Si hay error al procesar el JSON, mostramos el mensaje en bruto
+            panel.log("RX-TXT", message);
+        }
     }
 
     @Override
     public void onBinaryMessage(ByteBuffer data) {
         try {
             BufferedImage img = service.procesarImagen(data);
-            if (img != null) panel.actualizarImagen(img);
+            if (img != null) {
+                panel.actualizarImagen(img);
+            } else {
+                panel.mostrarError("Imagen recibida no válida");
+            }
         } catch (IOException ex) {
-            panel.log("ERROR-IMG", ex.getMessage());
+            panel.mostrarError("Error al procesar imagen: " + ex.getMessage());
         }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        panel.mostrarMensaje("WebSocket cerrado: " + reason);
+        String mensaje = "WebSocket cerrado";
+        if (remote) {
+            mensaje += " por el cliente";
+        }
+        mensaje += ": " + reason + " (código: " + code + ")";
+        panel.mostrarMensaje(mensaje);
     }
 
     @Override
     public void onError(Exception ex) {
         panel.mostrarError("WebSocket error: " + ex.getMessage());
+        ex.printStackTrace();
     }
 }
