@@ -1,7 +1,10 @@
 package com.admin.remoto.controller;
 
 
+import com.admin.remoto.Observador.Observador;
+import com.admin.remoto.models.Evento;
 import com.admin.remoto.services.AdministracionService;
+import com.admin.remoto.services.ConexionService;
 import com.admin.remoto.swing.AdministracionPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,7 +20,8 @@ import java.util.Date;
 import java.util.Map;
 
 @Component
-public class AdministracionController implements AdministracionService.Listener {
+public class AdministracionController {
+
     private final AdministracionService service;
     private AdministracionPanel panel;
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
@@ -25,7 +29,7 @@ public class AdministracionController implements AdministracionService.Listener 
     @Autowired
     public AdministracionController(AdministracionService service) {
         this.service = service;
-        this.service.setListener(this);
+        this.service.setController(this);
     }
 
     public void setAdministracionPanel(AdministracionPanel panel) {
@@ -62,63 +66,29 @@ public class AdministracionController implements AdministracionService.Listener 
         service.desconectar();
     }
 
-    // --- Implementación de la interfaz Listener ---
-    @Override
-    public void onOpen() {
-        panel.mostrarMensaje("WebSocket abierto - Esperando datos del cliente...");
-    }
-
-    @Override
-    public void onTextMessage(String message) {
-        try {
-            // Procesar el mensaje como JSON
-            Map<String, String> jsonMsg = service.procesarMensajeJson(message);
-
-            if (jsonMsg.containsKey("type") && "log".equals(jsonMsg.get("type"))) {
-                // Es un mensaje de log del WindowTracker
-                String logMessage = jsonMsg.get("message");
-                panel.log("LOG", logMessage);
-
-                // También lo enviamos a la consola del servidor
-                System.out.println(logMessage);
-            } else {
-                // Es otro tipo de mensaje de texto
-                String now = timeFormat.format(new Date());
-                panel.log("MSG " + now, message);
-            }
-        } catch (Exception e) {
-            // Si hay error al procesar el JSON, mostramos el mensaje en bruto
-            panel.log("RX-TXT", message);
-        }
-    }
-
-    @Override
-    public void onBinaryMessage(ByteBuffer data) {
-        try {
-            BufferedImage img = service.procesarImagen(data);
-            if (img != null) {
-                panel.actualizarImagen(img);
-            } else {
-                panel.mostrarError("Imagen recibida no válida");
-            }
-        } catch (IOException ex) {
-            panel.mostrarError("Error al procesar imagen: " + ex.getMessage());
-        }
-    }
-
-    @Override
-    public void onClose(int code, String reason, boolean remote) {
-        String mensaje = "WebSocket cerrado";
-        if (remote) {
-            mensaje += " por el cliente";
-        }
-        mensaje += ": " + reason + " (código: " + code + ")";
+    public void mostrarMensaje(String mensaje) {
         panel.mostrarMensaje(mensaje);
     }
 
-    @Override
-    public void onError(Exception ex) {
-        panel.mostrarError("WebSocket error: " + ex.getMessage());
-        ex.printStackTrace();
+    public void mostrarError(String mensaje) {
+        panel.mostrarError(mensaje);
+    }
+
+    public void recibirTexto(Map<String, String> jsonMsg, String raw) {
+        if ("log".equals(jsonMsg.get("type"))) {
+            String logMessage = jsonMsg.get("message");
+            panel.log("LOG", logMessage);
+        } else {
+            String now = timeFormat.format(new Date());
+            panel.log("MSG " + now, raw);
+        }
+    }
+
+    public void recibirImagen(BufferedImage img) {
+        if (img != null) {
+            panel.actualizarImagen(img);
+        } else {
+            panel.mostrarError("Imagen recibida no válida");
+        }
     }
 }

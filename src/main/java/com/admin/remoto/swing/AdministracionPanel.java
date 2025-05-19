@@ -1,6 +1,7 @@
 package com.admin.remoto.swing;
 
 import com.admin.remoto.controller.AdministracionController;
+import com.admin.remoto.services.EscaladoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -40,26 +41,22 @@ public class AdministracionPanel extends JPanel {
     private void initComponents() {
         setLayout(new BorderLayout());
 
-        // Panel de imagen
         imageLabel.setHorizontalAlignment(JLabel.CENTER);
         JScrollPane imagePane = new JScrollPane(imageLabel);
         imagePane.setPreferredSize(new Dimension(1024, 768));
         add(imagePane, BorderLayout.CENTER);
 
-        // Panel de logs
         logArea.setEditable(false);
         logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         JScrollPane logPane = new JScrollPane(logArea);
-        logPane.setPreferredSize(new Dimension(500, 0)); // Ancho fijo para el panel de logs
+        logPane.setPreferredSize(new Dimension(500, 0));
         add(logPane, BorderLayout.EAST);
 
-        // Panel inferior con botones y opciones
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(backButton, BorderLayout.WEST);
         bottomPanel.add(autoScrollCheckBox, BorderLayout.EAST);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Configurar acciones
         backButton.addActionListener(e -> volverAListaServidores());
     }
 
@@ -89,25 +86,17 @@ public class AdministracionPanel extends JPanel {
                 scaledWidth = (int) (panelHeight * imgRatio);
             }
 
-            // Crear una imagen escalada de forma más eficiente
-            BufferedImage scaledImage = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_RGB);
-            Graphics2D g2 = scaledImage.createGraphics();
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.drawImage(img, 0, 0, scaledWidth, scaledHeight, null);
-            g2.dispose();
-
-            imageLabel.setIcon(new ImageIcon(scaledImage));
+            BufferedImage scaled = EscaladoService.scaleImage(img, scaledWidth, scaledHeight);
+            imageLabel.setIcon(new ImageIcon(scaled));
             revalidate();
         });
     }
+
 
     public void log(String prefix, String msg) {
         SwingUtilities.invokeLater(() -> {
             logArea.append(String.format("[%s] %s%n", prefix, msg));
 
-            // Auto-scroll si está activado
             if (autoScrollCheckBox.isSelected()) {
                 logArea.setCaretPosition(logArea.getDocument().getLength());
             }
@@ -120,12 +109,6 @@ public class AdministracionPanel extends JPanel {
 
     public void mostrarError(String mensaje) {
         log("ERROR", mensaje);
-    }
-
-    public void limpiarLogs() {
-        SwingUtilities.invokeLater(() -> {
-            logArea.setText("");
-        });
     }
 
     public void volverAListaServidores() {

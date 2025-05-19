@@ -1,6 +1,8 @@
 package com.admin.remoto.services;
 
+import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.controller.AdministracionController;
+import com.admin.remoto.models.Evento;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.java_websocket.client.WebSocketClient;
@@ -20,97 +22,66 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Service
-public class AdministracionService {
-    /**
-     * Listener para eventos provenientes del WebSocket y errores
-     */
-    public interface Listener {
-        void onOpen();
-        void onTextMessage(String message);
-        void onBinaryMessage(ByteBuffer data);
-        void onClose(int code, String reason, boolean remote);
-        void onError(Exception ex);
+public class AdministracionService implements Observador {
+
+    private final ConexionService conexionService;
+    private final LogsReceiver logsReceiver;
+    private final ImageReceiver imageProcessor;
+    private AdministracionController controller; // Ahora delega
+
+    public AdministracionService(ConexionService conexionService,
+                                 LogsReceiver logsReceiver,
+                                 ImageReceiver imageProcessor) {
+        this.conexionService = conexionService;
+        this.logsReceiver = logsReceiver;
+        this.imageProcessor = imageProcessor;
+        this.conexionService.agregarObservador(this);
     }
 
-    private WebSocketClient socket;
-    private final ObjectMapper mapper = new ObjectMapper();
-    private Listener listener;
-
-    /**
-     * Registra el listener para recibir callbacks
-     */
-    public void setListener(Listener listener) {
-        this.listener = listener;
+    public void setController(AdministracionController controller) {
+        this.controller = controller;
     }
 
-    /**
-     * Conecta al servidor WebSocket y delega eventos al listener
-     */
+    @Override
+    public void actualizar(Evento evento) {
+        switch (evento.getTipo()) {
+            case OPEN -> controller.mostrarMensaje("Conexión abierta");
+            case TEXT -> {
+                String msg = (String) evento.getContenido();
+                Map<String, String> datos = procesarMensajeJson(msg);
+                controller.recibirTexto(datos, msg);
+            }
+            case BINARY -> {
+                try {
+                    BufferedImage img = procesarImagen((ByteBuffer) evento.getContenido());
+                    controller.recibirImagen(img);
+                } catch (IOException e) {
+                    controller.mostrarError("Error al procesar imagen: " + e.getMessage());
+                }
+            }
+            case CLOSE -> controller.mostrarMensaje("Conexión cerrada: " + evento.getContenido());
+            case ERROR -> {
+                Exception ex = (Exception) evento.getContenido();
+                controller.mostrarError("Error WebSocket: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }
+
     public void conectar(String host, int port) throws Exception {
-        socket = new WebSocketClient(new URI("ws://" + host + ":" + port + "/ws")) {
-            @Override
-            public void onOpen(ServerHandshake sh) {
-                if (listener != null) listener.onOpen();
-            }
-
-            @Override
-            public void onMessage(String message) {
-                if (listener != null) listener.onTextMessage(message);
-            }
-
-            @Override
-            public void onMessage(ByteBuffer bytes) {
-                if (listener != null) listener.onBinaryMessage(bytes);
-            }
-
-            @Override
-            public void onClose(int code, String reason, boolean remote) {
-                if (listener != null) listener.onClose(code, reason, remote);
-            }
-
-            @Override
-            public void onError(Exception ex) {
-                if (listener != null) listener.onError(ex);
-            }
-        };
-
-        if (!socket.connectBlocking()) {
-            throw new IOException("No se pudo establecer conexión con el servidor");
-        }
+        conexionService.connect("ws://" + host + ":" + port + "/ws");
     }
 
-    /**
-     * Cierra la conexión WebSocket
-     */
     public void desconectar() {
-        if (socket != null && socket.isOpen()) {
-            socket.close();
-        }
+        conexionService.disconnect();
     }
 
-    /**
-     * Procesa un mensaje JSON recibido
-     */
     public Map<String, String> procesarMensajeJson(String json) {
-        try {
-            return mapper.readValue(json, new TypeReference<Map<String, String>>() {});
-        } catch (Exception e) {
-            // Si no es un JSON válido, devolvemos un mapa con el mensaje original
-            Map<String, String> result = new HashMap<>();
-            result.put("type", "text");
-            result.put("message", json);
-            return result;
-        }
+        return logsReceiver.parse(json);
     }
 
-    /**
-     * Procesa imágenes recibidas y las convierte a BufferedImage
-     */
     public BufferedImage procesarImagen(ByteBuffer buffer) throws IOException {
-        byte[] data = new byte[buffer.remaining()];
-        buffer.get(data);
-        return ImageIO.read(new ByteArrayInputStream(data));
+        return imageProcessor.fromBuffer(buffer);
     }
 }
