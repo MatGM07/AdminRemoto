@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reportes de Logs</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e6f0ff;
+            color: #003366;
+            margin: 2rem;
+        }
+        h2 {
+            color: #004080;
+            border-bottom: 2px solid #004080;
+            padding-bottom: 0.5rem;
+        }
+        .log-lote {
+            background-color: #cce0ff;
+            border: 1px solid #99bbff;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 10px rgba(0, 68, 136, 0.2);
+        }
+        .log-entry {
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #99bbff;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        .timestamp {
+            font-weight: 600;
+            color: #002244;
+            margin-right: 0.8rem;
+            font-family: monospace;
+        }
+        .message {
+            white-space: pre-wrap;
+            color: #001a33;
+        }
+    </style>
+</head>
+<body>
+<h2>Reportes de Logs</h2>
+
+<div th:each="logList, loteStat : ${logsParseados}" class="log-lote">
+    <h3>Lote de logs [[${loteStat.index + 1}]]</h3>
+
+    <div th:each="log : ${logList}" class="log-entry">
+        <span class="timestamp" th:text="${#temporals.format(log.timestamp, 'yyyy-MM-dd HH:mm:ss')}"></span>
+        <span class="message" th:text="${log.message}"></span>
+    </div>
+</div>
+
+</body>
+</html>

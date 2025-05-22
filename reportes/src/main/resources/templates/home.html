@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f8ff;
+            margin: 0;
+        }
+        header {
+            background-color: #1565c0;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            padding: 40px;
+            text-align: center;
+        }
+        a.reportes-btn {
+            background-color: #1565c0; /* Azul principal */
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 15px; /* Separación debajo */
+            display: inline-block;
+        }
+        a.logout-btn {
+            background-color: #ef5350;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Bienvenido</h1>
+</header>
+<main>
+    <p>Has iniciado sesión correctamente.</p>
+    <p>Bienvenido, <span th:text="${username}"></span>!</p>
+    <a href="/reportes" class="reportes-btn">Ver reportes</a><br>
+    <a href="/logout" class="logout-btn">Cerrar sesión</a>
+</main>
+</body>
+</html>

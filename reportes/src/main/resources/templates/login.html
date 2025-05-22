@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e8f0fe;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            color: #1a73e8;
+            text-align: center;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        a {
+            display: block;
+            margin-top: 10px;
+            text-align: center;
+            color: #1a73e8;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <h2>Iniciar Sesión</h2>
+
+    <div th:if="${param.error}" style="color: red; margin-bottom: 10px;">
+        <p>Usuario o contraseña incorrectos.</p>
+    </div>
+
+    <!-- Mensaje de logout -->
+    <div th:if="${param.logout}" style="color: green; margin-bottom: 10px;">
+        <p>Has cerrado sesión correctamente.</p>
+    </div>
+
+    <!-- Mensaje de registro exitoso -->
+    <div th:if="${param.registroExitoso}" style="color: green; margin-bottom: 10px;">
+        <p>Registro exitoso, por favor inicia sesión.</p>
+    </div>
+
+    <form method="post" action="/login">
+        <input type="text" name="username" placeholder="Usuario" required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">Entrar</button>
+    </form>
+    <a href="/registro">¿No tienes cuenta? Regístrate</a>
+</div>
+</body>
+</html>
