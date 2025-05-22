@@ -7,7 +7,7 @@ import java.util.List;
 public interface LogLoteService {
     LogLote guardarLote(LogLote logLote);
     List<LogLote> obtenerTodos();
-    List<LogLote> obtenerPorCliente(Long clienteId);
+    List<LogLote> obtenerPorSesionCliente(Long idSesion, Long idUsuario);
 
 }
 

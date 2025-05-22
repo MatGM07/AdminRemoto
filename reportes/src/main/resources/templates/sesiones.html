@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sesiones del Usuario</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #e3f2fd;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #0d47a1;
+        }
+
+        .sesion-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .sesion-card {
+            background-color: #ffffff;
+            border: 1px solid #90caf9;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .sesion-card h2 {
+            margin-top: 0;
+            color: #1565c0;
+        }
+
+        .sesion-card p {
+            margin: 6px 0;
+            color: #333;
+        }
+
+        .ver-reportes-btn {
+            display: inline-block;
+            margin-top: 12px;
+            background-color: #1565c0;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .ver-reportes-btn:hover {
+            background-color: #0d47a1;
+        }
+    </style>
+</head>
+<body>
+<h1>Historial de Sesiones</h1>
+
+<div class="sesion-container">
+    <div th:each="sesion : ${sesiones}" class="sesion-card">
+        <h2>Sesión [[${sesion.id}]]</h2>
+        <p><strong>Fecha inicio:</strong> [[${#temporals.format(sesion.fechaHoraInicio, 'yyyy-MM-dd HH:mm:ss')}]]</p>
+        <p><strong>Fecha fin:</strong> [[${#temporals.format(sesion.fechaHoraFin, 'yyyy-MM-dd HH:mm:ss')}]]</p>
+        <p><strong>Servidor:</strong> [[${sesion.servidor.direccion}]]:[[${sesion.servidor.puerto}]]</p>
+        <a class="ver-reportes-btn" th:href="@{'/reportes/' + ${sesion.id}}">Ver reportes</a>
+    </div>
+</div>
+</body>
+</html>

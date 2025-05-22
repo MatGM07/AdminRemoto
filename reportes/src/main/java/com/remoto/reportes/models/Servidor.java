@@ -2,6 +2,7 @@ package com.remoto.reportes.models;
 
 import jakarta.persistence.*;
 
+
 @Entity
 @Table(name = "servidores")
 public class Servidor {

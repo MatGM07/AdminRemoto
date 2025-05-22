@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,13 +30,14 @@ public class ReportesController {
         this.logLoteService = logLoteService;
     }
 
-    @GetMapping("/reportes")
-    public String mostrarReportes(Model model){
+    @GetMapping("/reportes/{idSesion}")
+    public String mostrarReportes(@PathVariable Long idSesion, Model model){
         Usuario current = sessionManager.getUsuario();
-        List<LogLote> logs = logLoteService.obtenerPorCliente(current.getId());
+
+        List<LogLote> logs = logLoteService.obtenerPorSesionCliente(idSesion,current.getId());
 
         ObjectMapper mapper = new ObjectMapper();
-        // Configurar ObjectMapper para trabajar con LocalDateTime
+
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 

@@ -3,6 +3,7 @@ package com.remoto.reportes.models;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+
 @Entity
 @Table(name = "logs")
 public class LogLote {
@@ -18,6 +19,9 @@ public class LogLote {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sesion_id")
+    private Sesion sesion;
 
 
     @Lob
@@ -63,5 +67,13 @@ public class LogLote {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+
+    public Sesion getSesion() {
+        return sesion;
+    }
+
+    public void setSesion(Sesion sesion) {
+        this.sesion = sesion;
     }
 }

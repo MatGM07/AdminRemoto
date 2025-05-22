@@ -29,8 +29,8 @@ public class LogLoteServiceImpl implements LogLoteService {
     }
 
     @Override
-    public List<LogLote> obtenerPorCliente(Long clienteId) {
-        return logLoteRepository.findByUsuarioId(clienteId);
+    public List<LogLote> obtenerPorSesionCliente(Long idSesion, Long idUsuario) {
+        return logLoteRepository.findBySesionIdAndUsuarioId(idSesion, idUsuario);
     }
 }
 

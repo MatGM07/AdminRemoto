@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface LogLoteRepository extends JpaRepository<LogLote,Long> {
-    List<LogLote> findByUsuarioId(Long UsuarioId);
+    List<LogLote> findBySesionIdAndUsuarioId(Long sesionId, Long usuarioId);
 }
