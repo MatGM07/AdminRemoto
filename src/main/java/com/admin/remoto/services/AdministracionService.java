@@ -74,6 +74,7 @@ public class AdministracionService implements Observador {
     }
 
     public void desconectar() {
+        controller.guardarLoteLogs();
         conexionService.disconnect();
     }
 

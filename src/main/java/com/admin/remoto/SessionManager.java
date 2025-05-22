@@ -1,5 +1,7 @@
 package com.admin.remoto;
 
+import com.admin.remoto.models.Servidor;
+import com.admin.remoto.models.Sesion;
 import com.admin.remoto.models.Usuario;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +13,8 @@ import java.util.List;
 public class SessionManager {
     private static SessionManager instance;
     private Usuario usuario; // Almacenamos el objeto Usuario
+    private Sesion sesion;
+    private Servidor servidor;
 
     private SessionManager() {}
 
@@ -29,7 +33,31 @@ public class SessionManager {
         return usuario;
     }
 
-    public void clearSession() {
+    public Sesion getSesion() {
+        return sesion;
+    }
+
+    public void setSesion(Sesion sesion) {
+        this.sesion = sesion;
+    }
+
+    public Servidor getServidor() {
+        return servidor;
+    }
+
+    public void setServidor(Servidor servidor) {
+        this.servidor = servidor;
+    }
+
+    public void clearUsuario() {
         this.usuario = null;
+    }
+
+    public void clearSesion(){
+        this.sesion = null;
+    }
+
+    public void clearServidor(){
+        this.servidor = null;
     }
 }

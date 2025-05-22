@@ -1,9 +1,11 @@
 package com.admin.remoto.controller;
 
+import com.admin.remoto.SessionManager;
 import com.admin.remoto.models.Servidor;
 import com.admin.remoto.services.ServidorListService;
 import com.admin.remoto.swing.AdministracionPanel;
 import com.admin.remoto.swing.ServidorListPanel;
+import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,10 +17,13 @@ import java.util.List;
 public class ServidorListController {
     private final ServidorListService service;
     private ServidorListPanel panel;
+    @Autowired
+    private SessionManager sessionManager;
 
     @Autowired
-    public ServidorListController(ServidorListService service) {
+    public ServidorListController(ServidorListService service, SessionManager sessionManager) {
         this.service = service;
+        this.sessionManager = sessionManager;
     }
 
     public void setPanel(ServidorListPanel panel) {
@@ -125,7 +130,7 @@ public class ServidorListController {
 
     public void conectarServidor(Servidor servidor) {
         panel.setLoadingState(true);
-        // Abrimos inmediatamente el panel, sin bloquear aquí la conexión:
+        sessionManager.setServidor(servidor);
         SwingUtilities.invokeLater(() -> {
             panel.setLoadingState(false);              // quitamos el loading
             panel.abrirVentanaConexion(servidor);      // abre adminPanel en nueva ventana

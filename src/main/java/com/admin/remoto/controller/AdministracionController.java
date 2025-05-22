@@ -3,13 +3,11 @@ package com.admin.remoto.controller;
 
 import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.SessionManager;
-import com.admin.remoto.models.Evento;
-import com.admin.remoto.models.LogEntry;
-import com.admin.remoto.models.LogLote;
-import com.admin.remoto.models.Usuario;
+import com.admin.remoto.models.*;
 import com.admin.remoto.services.AdministracionService;
 import com.admin.remoto.services.ConexionService;
 import com.admin.remoto.services.LogLoteService;
+import com.admin.remoto.services.SesionService;
 import com.admin.remoto.swing.AdministracionPanel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,13 +45,15 @@ public class AdministracionController {
     private final ObjectMapper mapper = new ObjectMapper();
     private long timestampInicioLote = System.currentTimeMillis();
     private final SessionManager sessionManager;
+    private final SesionService sesionService;
 
     @Autowired
-    public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager) {
+    public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService) {
         this.service = service;
         this.logLoteService = logLoteService;
         this.service.setController(this);
         this.sessionManager = sessionManager;
+        this.sesionService = sesionService;
 
         scheduler.scheduleAtFixedRate(this::guardarLoteLogs, 30, 30, TimeUnit.SECONDS);
     }
@@ -80,9 +80,16 @@ public class AdministracionController {
             protected void done() {
                 if (errorMessage != null) {
                     panel.mostrarError("Error al conectar: " + errorMessage);
+                    sessionManager.clearServidor();
                     panel.volverAListaServidores();
                 } else {
                     panel.mostrarMensaje("Conectado a " + host + ":" + port);
+                    Sesion sesion = new Sesion();
+                    sesion.setFechaHoraInicio(LocalDateTime.now());
+                    sesion.setUsuario(sessionManager.getUsuario());
+                    sesion.setServidor(sessionManager.getServidor());
+                    sesionService.guardar(sesion);
+                    sessionManager.setSesion(sesion);
                 }
             }
         }.execute();
@@ -120,8 +127,9 @@ public class AdministracionController {
         }
     }
 
-    private void guardarLoteLogs() {
+    public void guardarLoteLogs() {
         if (bufferLogs.isEmpty()) return;
+        if (sessionManager.getSesion()==null) return;
 
         long timestampFinMillis = System.currentTimeMillis();
         try {
@@ -133,6 +141,7 @@ public class AdministracionController {
             lote.setTimestampFin(millisToDateTime(timestampFinMillis));
             lote.setUsuario(current);
             lote.setContenidoJson(jsonLote);
+            lote.setSesion(sessionManager.getSesion());
 
             logLoteService.guardarLote(lote);
 

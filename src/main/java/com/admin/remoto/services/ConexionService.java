@@ -2,14 +2,20 @@ package com.admin.remoto.services;
 
 import com.admin.remoto.Observador.Observable;
 import com.admin.remoto.Observador.Observador;
+import com.admin.remoto.SessionManager;
+import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.models.Evento;
+import com.admin.remoto.models.Sesion;
+import org.hibernate.Session;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +24,16 @@ import java.util.List;
 public class ConexionService implements Observable {
     private WebSocketClient socket;
     private final List<Observador> observadores = new ArrayList<>();
+    private final SessionManager sessionManager;
+
+    @Autowired
+    private final SesionService sesionService;
+
+    @Autowired
+    public ConexionService(SessionManager sessionManager, SesionService sesionService){
+        this.sessionManager = sessionManager;
+        this.sesionService = sesionService;
+    }
 
     @Override
     public void agregarObservador(Observador observador) {
@@ -70,6 +86,11 @@ public class ConexionService implements Observable {
     }
     public void disconnect() {
         if (socket != null && socket.isOpen()) {
+            Sesion finalizada = sessionManager.getSesion();
+            finalizada.setFechaHoraFin(LocalDateTime.now());
+            sesionService.actualizar(finalizada.getId(),finalizada);
+            sessionManager.clearServidor();
+            sessionManager.clearSesion();
             socket.close();
         }
     }
