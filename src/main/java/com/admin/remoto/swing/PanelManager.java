@@ -1,7 +1,7 @@
 package com.admin.remoto.swing;
 
+import com.admin.remoto.command.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
@@ -24,31 +24,16 @@ public class PanelManager {
         CardLayout cardLayout = new CardLayout();
         JPanel mainPanel = new JPanel(cardLayout);
 
-        // Configurar callbacks
-        loginPanel.setOnLoginSuccess(() -> {
-            serverListPanel.actualizarLista();
-            cardLayout.show(mainPanel, "servers");
-            frame.setTitle("Control Remoto - Servidores");
-        });
+        Command loginExitosoCommand = new LoginExitosoCommand(serverListPanel, mainPanel, cardLayout, frame);
+        Command logoutCommand = new LogoutCommand(loginPanel, mainPanel, cardLayout, frame);
+        Command mostrarAdminCommand = new MostrarAdministracionCommand(mainPanel, cardLayout, frame);
+        Command volverAListaCommand = new VolverAListaCommand(mainPanel, cardLayout, frame);
 
-        serverListPanel.setOnLogoutRequested(() -> {
-            loginPanel.resetFields();
-            SecurityContextHolder.clearContext();
-            cardLayout.show(mainPanel, "login");
-            frame.setTitle("Control Remoto - Login");
-        });
+        loginPanel.setOnLoginSuccess(loginExitosoCommand::execute);
+        serverListPanel.setOnLogoutRequested(logoutCommand::execute);
+        serverListPanel.setOnConnectRequested(mostrarAdminCommand::execute);
+        administracionPanel.setOnVolverALista(volverAListaCommand::execute);
 
-        serverListPanel.setOnConnectRequested(() -> {
-            cardLayout.show(mainPanel, "admin");
-            frame.setTitle("Control Remoto - Administración");
-        });
-
-        administracionPanel.setOnVolverALista(() -> {
-            cardLayout.show(mainPanel, "servers");
-            frame.setTitle("Control Remoto - Servidores");
-        });
-
-        // Agregar paneles
         mainPanel.add(loginPanel, "login");
         mainPanel.add(serverListPanel, "servers");
         mainPanel.add(administracionPanel, "admin");

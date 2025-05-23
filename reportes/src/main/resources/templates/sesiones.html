@@ -57,6 +57,11 @@
         .ver-reportes-btn:hover {
             background-color: #0d47a1;
         }
+
+        .volver{
+            display: flex;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -70,6 +75,11 @@
         <p><strong>Servidor:</strong> [[${sesion.servidor.direccion}]]:[[${sesion.servidor.puerto}]]</p>
         <a class="ver-reportes-btn" th:href="@{'/reportes/' + ${sesion.id}}">Ver reportes</a>
     </div>
+</div>
+<br><br><br><br>
+<div class="volver">
+
+    <a class="ver-reportes-btn" href="/home">Volver</a>
 </div>
 </body>
 </html>

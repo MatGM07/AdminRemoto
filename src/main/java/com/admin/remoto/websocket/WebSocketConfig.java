@@ -1,6 +1,5 @@
-package com.admin.remoto.config;
+package com.admin.remoto.websocket;
 
-import com.admin.remoto.websocket.MyWebSocketHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.WebSocketHandler;

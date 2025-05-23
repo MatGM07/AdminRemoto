@@ -1,7 +1,7 @@
 package com.admin.remoto.controller;
 
 import com.admin.remoto.models.Usuario;
-import com.admin.remoto.services.LoginService;
+import com.admin.remoto.services.business.LoginService;
 import com.admin.remoto.swing.LoginPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

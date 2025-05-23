@@ -1,26 +1,15 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.business;
 
-import com.admin.remoto.SessionManager;
-import com.admin.remoto.dto.LoginResult;
 import com.admin.remoto.models.Usuario;
-import com.admin.remoto.swing.ServidorListPanel;
+import com.admin.remoto.services.persistence.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import javax.swing.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Service
 public class LoginService {
+
     private final UsuarioService usuarioService;
     private final SessionManager sessionManager;
 

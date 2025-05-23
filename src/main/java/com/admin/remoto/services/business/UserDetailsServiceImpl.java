@@ -1,4 +1,4 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.business;
 
 import com.admin.remoto.models.Usuario;
 import com.admin.remoto.repositories.UsuarioRepositorio;

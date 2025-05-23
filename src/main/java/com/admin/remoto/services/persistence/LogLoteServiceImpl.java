@@ -1,11 +1,10 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.persistence;
 
 import com.admin.remoto.models.LogLote;
 import com.admin.remoto.repositories.LogLoteRepositorio;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service

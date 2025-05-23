@@ -1,25 +1,13 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.business;
 
 import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.models.Evento;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.event.AWTEventListener;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Map;
 
 @Service

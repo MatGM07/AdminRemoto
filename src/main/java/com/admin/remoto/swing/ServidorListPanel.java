@@ -1,22 +1,13 @@
 package com.admin.remoto.swing;
 
-import com.admin.remoto.SessionManager;
 import com.admin.remoto.controller.ServidorListController;
 import com.admin.remoto.models.Servidor;
-import com.admin.remoto.models.Usuario;
-import com.admin.remoto.services.ServidorListService;
-import com.admin.remoto.services.ServidorService;
-import com.admin.remoto.services.UsuarioService;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.util.*;
 import java.util.List;
 @Component
 public class ServidorListPanel extends JPanel {

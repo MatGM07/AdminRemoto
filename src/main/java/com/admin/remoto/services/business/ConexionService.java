@@ -1,12 +1,10 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.business;
 
 import com.admin.remoto.Observador.Observable;
 import com.admin.remoto.Observador.Observador;
-import com.admin.remoto.SessionManager;
-import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.models.Evento;
 import com.admin.remoto.models.Sesion;
-import org.hibernate.Session;
+import com.admin.remoto.services.persistence.SesionService;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.springframework.beans.factory.annotation.Autowired;

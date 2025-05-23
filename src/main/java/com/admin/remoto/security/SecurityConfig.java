@@ -1,4 +1,4 @@
-package com.admin.remoto.config;
+package com.admin.remoto.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

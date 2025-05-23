@@ -1,8 +1,7 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.persistence;
 
 import com.admin.remoto.models.LogLote;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface LogLoteService {

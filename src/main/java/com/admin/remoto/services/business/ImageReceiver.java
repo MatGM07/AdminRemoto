@@ -1,4 +1,4 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.business;
 
 import org.springframework.stereotype.Component;
 

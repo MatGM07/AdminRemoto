@@ -1,13 +1,9 @@
-package com.admin.remoto;
+package com.admin.remoto.services.business;
 
 import com.admin.remoto.models.Servidor;
 import com.admin.remoto.models.Sesion;
 import com.admin.remoto.models.Usuario;
 import org.springframework.stereotype.Service;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Service
 public class SessionManager {

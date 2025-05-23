@@ -3,22 +3,17 @@ package com.admin.remoto.websocket;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.admin.remoto.services.AdministracionService;
+import com.admin.remoto.services.business.AdministracionService;
 import com.admin.remoto.swing.AdministracionPanel;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
 @Component
 public class MyWebSocketHandler implements WebSocketHandler {
 

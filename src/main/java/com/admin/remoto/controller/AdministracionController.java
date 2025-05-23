@@ -1,13 +1,11 @@
 package com.admin.remoto.controller;
 
 
-import com.admin.remoto.Observador.Observador;
-import com.admin.remoto.SessionManager;
+import com.admin.remoto.services.business.SessionManager;
 import com.admin.remoto.models.*;
-import com.admin.remoto.services.AdministracionService;
-import com.admin.remoto.services.ConexionService;
-import com.admin.remoto.services.LogLoteService;
-import com.admin.remoto.services.SesionService;
+import com.admin.remoto.services.business.AdministracionService;
+import com.admin.remoto.services.persistence.LogLoteService;
+import com.admin.remoto.services.persistence.SesionService;
 import com.admin.remoto.swing.AdministracionPanel;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,11 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.AWTEventListener;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;

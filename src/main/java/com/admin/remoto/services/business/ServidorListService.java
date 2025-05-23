@@ -1,12 +1,10 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.business;
 
-import com.admin.remoto.SessionManager;
 import com.admin.remoto.models.Servidor;
 import com.admin.remoto.models.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.swing.*;
 import java.util.List;
 
 @Service

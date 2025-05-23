@@ -1,4 +1,4 @@
-package com.admin.remoto.services;
+package com.admin.remoto.services.business;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,15 +1,12 @@
 package com.admin.remoto.swing;
 
 import com.admin.remoto.controller.LoginController;
-import com.admin.remoto.dto.LoginResult;
-import com.admin.remoto.models.Usuario;
-import com.admin.remoto.services.LoginService;
+import org.apache.juli.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Optional;
 
 @Component
 public class LoginPanel extends JPanel {
@@ -19,10 +16,10 @@ public class LoginPanel extends JPanel {
     private JButton loginButton;
     private JLabel messageLabel;
 
-
+    @Autowired
     private final LoginController loginController;
 
-    // Callbacks
+
     private Runnable onLoginSuccess;
 
     @Autowired
@@ -45,7 +42,6 @@ public class LoginPanel extends JPanel {
         gbc.gridx = 1;
         add(nombreField, gbc);
 
-        // Campo contraseña
         gbc.gridx = 0;
         gbc.gridy = 1;
         add(new JLabel("Contraseña:"), gbc);
@@ -53,18 +49,15 @@ public class LoginPanel extends JPanel {
         gbc.gridx = 1;
         add(passwordField, gbc);
 
-        // Botón Login
         loginButton = new JButton("Iniciar sesión");
         gbc.gridx = 1;
         gbc.gridy = 2;
         add(loginButton, gbc);
 
-        // Etiqueta de mensaje
         messageLabel = new JLabel(" ");
         gbc.gridx = 1;
         gbc.gridy = 3;
         add(messageLabel, gbc);
-        // Listener de Login
 
         loginButton.addActionListener(e -> realizarLogin());
     }
@@ -77,7 +70,6 @@ public class LoginPanel extends JPanel {
             mostrarError("Por favor, introduce nombre y contraseña");
             return;
         }
-
         setLoadingState(true);
         loginController.autenticarUsuario(nombre, contrasena);
     }

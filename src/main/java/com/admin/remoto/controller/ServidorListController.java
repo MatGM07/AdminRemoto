@@ -1,11 +1,9 @@
 package com.admin.remoto.controller;
 
-import com.admin.remoto.SessionManager;
+import com.admin.remoto.services.business.SessionManager;
 import com.admin.remoto.models.Servidor;
-import com.admin.remoto.services.ServidorListService;
-import com.admin.remoto.swing.AdministracionPanel;
+import com.admin.remoto.services.business.ServidorListService;
 import com.admin.remoto.swing.ServidorListPanel;
-import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
