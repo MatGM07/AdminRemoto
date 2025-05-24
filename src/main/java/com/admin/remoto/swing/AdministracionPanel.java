@@ -2,26 +2,35 @@ package com.admin.remoto.swing;
 
 import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.services.business.EscaladoService;
+import com.admin.remoto.services.business.NavigationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class AdministracionPanel extends JPanel {
     private final JLabel imageLabel = new JLabel();
-    private final JTextArea logArea = new JTextArea(15, 60);
+    private final JTextPane logArea = new JTextPane();
     private final JButton backButton = new JButton("Volver a la lista de servidores");
+    private final JButton transferFileButton = new JButton("Transferir archivo");
     private final JCheckBox autoScrollCheckBox = new JCheckBox("Auto-scroll logs", true);
 
     private final AdministracionController controller;
     private Runnable onVolverALista;
+
+
 
     @Autowired
     public AdministracionPanel(AdministracionController controller) {
@@ -39,7 +48,10 @@ public class AdministracionPanel extends JPanel {
         add(imagePane, BorderLayout.CENTER);
 
         logArea.setEditable(false);
-        logArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
+        logArea.setFont(new Font("Arial", Font.PLAIN, 12));
+        logArea.setBackground(new Color(43, 45, 48));
+        logArea.setForeground(Color.WHITE); // color por defecto
+
         JScrollPane logPane = new JScrollPane(logArea);
         logPane.setPreferredSize(new Dimension(500, 0));
         add(logPane, BorderLayout.EAST);
@@ -47,9 +59,13 @@ public class AdministracionPanel extends JPanel {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(backButton, BorderLayout.WEST);
         bottomPanel.add(autoScrollCheckBox, BorderLayout.EAST);
+        bottomPanel.add(transferFileButton, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
         backButton.addActionListener(e -> volverAListaServidores());
+
+        transferFileButton.addActionListener(e -> controller.seleccionarYTransferirArchivo(this));
+
     }
 
     public void iniciarConexion(String host, int port) {
@@ -87,10 +103,26 @@ public class AdministracionPanel extends JPanel {
 
     public void log(String prefix, String msg) {
         SwingUtilities.invokeLater(() -> {
-            logArea.append(String.format("[%s] %s%n", prefix, msg));
+            StyledDocument doc = logArea.getStyledDocument();
 
-            if (autoScrollCheckBox.isSelected()) {
-                logArea.setCaretPosition(logArea.getDocument().getLength());
+            Style style = logArea.addStyle("default", null);
+
+            if ("ERROR".equals(prefix)) {
+                StyleConstants.setForeground(style, Color.RED);
+            } else if ("INFO".equals(prefix)) {
+                StyleConstants.setForeground(style, Color.WHITE);
+            } else {
+                StyleConstants.setForeground(style, Color.LIGHT_GRAY);
+            }
+
+            try {
+                doc.insertString(doc.getLength(), String.format("[%s] %s%n", prefix, msg), style);
+
+                if (autoScrollCheckBox.isSelected()) {
+                    logArea.setCaretPosition(doc.getLength());
+                }
+            } catch (BadLocationException e) {
+                e.printStackTrace(); // esto se puede enrutar a log también
             }
         });
     }
@@ -111,4 +143,5 @@ public class AdministracionPanel extends JPanel {
     public void setOnVolverALista(Runnable callback) {
         this.onVolverALista = callback;
     }
+
 }

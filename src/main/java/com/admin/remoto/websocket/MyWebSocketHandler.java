@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.admin.remoto.services.business.AdministracionService;
+import com.admin.remoto.services.panel.AdministracionService;
 import com.admin.remoto.swing.AdministracionPanel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

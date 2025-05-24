@@ -19,7 +19,7 @@ import java.util.List;
 
 
 @Component
-public class ConexionService implements Observable {
+public class ConexionService implements Observable<Evento,Void> {
     private WebSocketClient socket;
     private final List<Observador> observadores = new ArrayList<>();
     private final SessionManager sessionManager;
@@ -44,44 +44,54 @@ public class ConexionService implements Observable {
     }
 
     @Override
-    public void notificarObservadores(Evento evento) {
+    public void notificarObservadores(Evento evento, Void v) {
         for (Observador obs : observadores) {
-            obs.actualizar(evento);
+            obs.actualizar(evento, v);
         }
     }
 
     public void connect(String fullUrl) throws Exception {
-        socket = new WebSocketClient(new URI(fullUrl)) {
-            @Override
-            public void onOpen(ServerHandshake sh) {
-                notificarObservadores(new Evento(Evento.Tipo.OPEN, null));
+        Void v = null;
+        try {
+            socket = new WebSocketClient(new URI(fullUrl)) {
+                @Override
+                public void onOpen(ServerHandshake sh) {
+                    notificarObservadores(new Evento(Evento.Tipo.OPEN, null), v);
+                }
+
+                @Override
+                public void onMessage(String message) {
+                    notificarObservadores(new Evento(Evento.Tipo.TEXT, message), v);
+                }
+
+                @Override
+                public void onMessage(ByteBuffer bytes) {
+                    notificarObservadores(new Evento(Evento.Tipo.BINARY, bytes), v);
+                }
+
+                @Override
+                public void onClose(int code, String reason, boolean remote) {
+                    notificarObservadores(new Evento(Evento.Tipo.CLOSE, reason), v);
+                }
+
+                @Override
+                public void onError(Exception ex) {
+                    notificarObservadores(new Evento(Evento.Tipo.ERROR, ex), v);
+                }
+            };
+
+            if (!socket.connectBlocking()) {
+                IOException exception = new IOException("No se pudo establecer conexión con el servidor");
+                notificarObservadores(new Evento(Evento.Tipo.ERROR, exception), v);
+                throw exception;
             }
 
-            @Override
-            public void onMessage(String message) {
-                notificarObservadores(new Evento(Evento.Tipo.TEXT, message));
-            }
-
-            @Override
-            public void onMessage(ByteBuffer bytes) {
-                notificarObservadores(new Evento(Evento.Tipo.BINARY, bytes));
-            }
-
-            @Override
-            public void onClose(int code, String reason, boolean remote) {
-                notificarObservadores(new Evento(Evento.Tipo.CLOSE, reason));
-            }
-
-            @Override
-            public void onError(Exception ex) {
-                notificarObservadores(new Evento(Evento.Tipo.ERROR, ex));
-            }
-        };
-
-        if (!socket.connectBlocking()) {
-            throw new IOException("No se pudo establecer conexión con el servidor");
+        } catch (Exception e) {
+            notificarObservadores(new Evento(Evento.Tipo.ERROR, e), v);
+            throw e; // ✅ Propagar hacia arriba
         }
     }
+
     public void disconnect() {
         if (socket != null && socket.isOpen()) {
             Sesion finalizada = sessionManager.getSesion();

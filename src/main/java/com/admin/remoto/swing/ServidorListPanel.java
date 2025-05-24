@@ -1,7 +1,9 @@
 package com.admin.remoto.swing;
 
+import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.controller.ServidorListController;
 import com.admin.remoto.models.Servidor;
+import com.admin.remoto.services.business.NavigationService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,8 +11,10 @@ import org.springframework.stereotype.Component;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Consumer;
+
 @Component
-public class ServidorListPanel extends JPanel {
+public class ServidorListPanel extends JPanel implements Observador<String, Object> {
     private final ServidorListController controller;
     private final ObjectProvider<AdministracionPanel> adminPanelProvider;
     private DefaultListModel<Servidor> listModel;
@@ -21,21 +25,22 @@ public class ServidorListPanel extends JPanel {
     private Runnable onLogoutRequested;
     private Runnable onConnectRequested;
 
+    @Autowired
+    private NavigationService navigationService;
 
     @Autowired
     public ServidorListPanel(ServidorListController controller,
                              ObjectProvider<AdministracionPanel> adminPanelProvider) {
         this.controller = controller;
         this.adminPanelProvider = adminPanelProvider;
-        controller.setPanel(this);
+        controller.agregarObservador(this);
         initUI();
     }
+
 
     private void initUI() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Top: input + logout
         JPanel topPanel = new JPanel(new BorderLayout(5, 0));
         direccionField = new JTextField(20);
         addButton = new JButton("Agregar servidor");
@@ -45,7 +50,6 @@ public class ServidorListPanel extends JPanel {
         inputPanel.add(addButton, BorderLayout.EAST);
         topPanel.add(inputPanel, BorderLayout.CENTER);
         logoutButton = new JButton("Cerrar sesión");
-        logoutButton.addActionListener(e -> { if (onLogoutRequested != null) onLogoutRequested.run(); });
         topPanel.add(logoutButton, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
@@ -67,7 +71,7 @@ public class ServidorListPanel extends JPanel {
         bottomPanel.add(statusLabel, BorderLayout.SOUTH);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        // Listeners
+
         addButton.addActionListener(e -> {
             String dir = direccionField.getText().trim();
             if (!dir.isEmpty()) {
@@ -75,17 +79,21 @@ public class ServidorListPanel extends JPanel {
                 direccionField.setText("");
             }
         });
+
         deleteButton.addActionListener(e -> {
             Servidor sel = servidorList.getSelectedValue();
             if (sel != null) controller.eliminarServidor(sel);
         });
+
+        logoutButton.addActionListener(e -> {
+            if (onLogoutRequested != null) onLogoutRequested.run();
+        });
+
         connectButton.addActionListener(e -> {
             Servidor sel = servidorList.getSelectedValue();
-            if (sel != null) {
-                controller.conectarServidor(sel);
-                // cuando acabe el SwingWorker con éxito...
-            }
+            if (sel != null) controller.conectarServidor(sel);
         });
+
         servidorList.addListSelectionListener(e -> {
             boolean selected = !servidorList.isSelectionEmpty();
             deleteButton.setEnabled(selected);
@@ -93,8 +101,30 @@ public class ServidorListPanel extends JPanel {
         });
     }
 
+    @Override
+    public void actualizar(String evento, Object dato) {
+        SwingUtilities.invokeLater(() -> {
+            switch (evento) {
+                case "LOADING" -> setLoadingState((Boolean) dato);
+                case "CARGA_EXITOSA" -> mostrarServidores((List<Servidor>) dato);
+                case "CARGA_ERROR", "AGREGAR_ERROR", "ELIMINAR_ERROR" -> mostrarError((String) dato);
+                case "SERVIDOR_AGREGADO" -> {
+                    agregarServidorALista((Servidor) dato);
+                    mostrarMensaje("Servidor agregado: " + ((Servidor) dato).getDireccion());
+                }
+                case "SERVIDOR_ELIMINADO" -> eliminarServidorDeLista((Servidor) dato);
+                case "MENSAJE" -> mostrarMensaje((String) dato);
+                case "CONECTAR_SERVIDOR" -> abrirVentanaConexion((Servidor) dato);
+            }
+        });
+    }
+
     public void setOnLogoutRequested(Runnable callback) {
         this.onLogoutRequested = callback;
+    }
+
+    public void setOnConnectRequested(Runnable callback) {
+        this.onConnectRequested = callback;
     }
 
     public void actualizarLista() {
@@ -139,39 +169,7 @@ public class ServidorListPanel extends JPanel {
         });
     }
 
-    public void setOnConnectRequested(Runnable callback) {
-        this.onConnectRequested = callback;
-    }
-
     public void abrirVentanaConexion(Servidor servidor) {
-        SwingUtilities.invokeLater(() -> {
-            AdministracionPanel adminPanel = adminPanelProvider.getObject();
-            adminPanel.setOnVolverALista(() -> {
-                JFrame adminFrame = (JFrame) SwingUtilities.getWindowAncestor(adminPanel);
-                if (adminFrame != null) adminFrame.dispose();
-                JFrame mainFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-                if (mainFrame != null) mainFrame.setVisible(true);
-            });
-            adminPanel.iniciarConexion(servidor.getDireccion(), Integer.parseInt(servidor.getPuerto()));
-
-            JFrame adminFrame = new JFrame("Control Remoto - " + servidor.getDireccion() + ":" + servidor.getPuerto());
-            adminFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            adminFrame.getContentPane().add(adminPanel);
-            adminFrame.pack();
-            adminFrame.setLocationRelativeTo(null);
-            adminFrame.setVisible(true);
-
-            // Ocultar ventana principal
-            JFrame mainFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            if (mainFrame != null) mainFrame.setVisible(false);
-        });
-    }
-
-    public void iniciarAdministracion(Servidor servidor) {
-        // Llamas al panel interno para conectar
-        adminPanelProvider.getObject()
-                .iniciarConexion(servidor.getDireccion(), Integer.parseInt(servidor.getPuerto()));
-        // Y disparas el callback para cambiar de tarjeta
-        if (onConnectRequested != null) onConnectRequested.run();
+        navigationService.abrirVentanaConexion(this, servidor, adminPanelProvider::getObject);
     }
 }

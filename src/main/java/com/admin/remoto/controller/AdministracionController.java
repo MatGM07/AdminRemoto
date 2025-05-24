@@ -1,9 +1,10 @@
 package com.admin.remoto.controller;
 
 
+import com.admin.remoto.services.business.FileSender;
 import com.admin.remoto.services.business.SessionManager;
 import com.admin.remoto.models.*;
-import com.admin.remoto.services.business.AdministracionService;
+import com.admin.remoto.services.panel.AdministracionService;
 import com.admin.remoto.services.persistence.LogLoteService;
 import com.admin.remoto.services.persistence.SesionService;
 import com.admin.remoto.swing.AdministracionPanel;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -26,6 +28,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.*;
+
 
 @Component
 public class AdministracionController {
@@ -40,14 +44,17 @@ public class AdministracionController {
     private long timestampInicioLote = System.currentTimeMillis();
     private final SessionManager sessionManager;
     private final SesionService sesionService;
+    private final FileSender fileSender;
+    private boolean conectado;
 
     @Autowired
-    public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService) {
+    public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender) {
         this.service = service;
         this.logLoteService = logLoteService;
         this.service.setController(this);
         this.sessionManager = sessionManager;
         this.sesionService = sesionService;
+        this.fileSender = fileSender;
 
         scheduler.scheduleAtFixedRate(this::guardarLoteLogs, 30, 30, TimeUnit.SECONDS);
     }
@@ -63,7 +70,7 @@ public class AdministracionController {
             @Override
             protected Void doInBackground() {
                 try {
-                    service.conectar(host, port);
+                     service.conectar(host, port);
                 } catch (Exception ex) {
                     errorMessage = ex.getMessage();
                 }
@@ -75,7 +82,6 @@ public class AdministracionController {
                 if (errorMessage != null) {
                     panel.mostrarError("Error al conectar: " + errorMessage);
                     sessionManager.clearServidor();
-                    panel.volverAListaServidores();
                 } else {
                     panel.mostrarMensaje("Conectado a " + host + ":" + port);
                     Sesion sesion = new Sesion();
@@ -148,5 +154,26 @@ public class AdministracionController {
 
     private LocalDateTime millisToDateTime(long millis) {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.systemDefault());
+    }
+
+    public void seleccionarYTransferirArchivo(java.awt.Component parentComponent) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Selecciona un archivo para transferir");
+        int result = fileChooser.showOpenDialog(parentComponent);
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            panel.log("INFO", "Archivo seleccionado: " + selectedFile.getAbsolutePath());
+
+            try {
+                fileSender.enviarArchivo(selectedFile);
+                panel.log("INFO", "Archivo enviado correctamente.");
+            } catch (Exception ex) {
+                panel.log("ERROR", "Error al enviar el archivo: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        } else {
+            panel.log("INFO", "Transferencia cancelada por el usuario.");
+        }
     }
 }

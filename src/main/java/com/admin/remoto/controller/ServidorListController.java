@@ -1,20 +1,24 @@
 package com.admin.remoto.controller;
 
+import com.admin.remoto.Observador.Observable;
+import com.admin.remoto.Observador.Observador;
+import com.admin.remoto.services.business.CargaServer;
 import com.admin.remoto.services.business.SessionManager;
 import com.admin.remoto.models.Servidor;
-import com.admin.remoto.services.business.ServidorListService;
-import com.admin.remoto.swing.ServidorListPanel;
+import com.admin.remoto.services.panel.ServidorListService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @Component
-public class ServidorListController {
+public class ServidorListController implements Observable<String, Object> {
+    private final List<Observador<String, Object>> observadores = new ArrayList<>();
     private final ServidorListService service;
-    private ServidorListPanel panel;
+
     @Autowired
     private SessionManager sessionManager;
 
@@ -24,45 +28,29 @@ public class ServidorListController {
         this.sessionManager = sessionManager;
     }
 
-    public void setPanel(ServidorListPanel panel) {
-        this.panel = panel;
+    @Override
+    public void agregarObservador(Observador<String, Object> obs) {
+        observadores.add(obs);
+    }
+
+    @Override
+    public void eliminarObservador(Observador<String, Object> obs) {
+        observadores.remove(obs);
+    }
+
+    @Override
+    public void notificarObservadores(String evento, Object dato) {
+        for (Observador<String, Object> obs : observadores) {
+            obs.actualizar(evento, dato);
+        }
     }
 
     public void cargarServidores() {
-        panel.setLoadingState(true);
-        new SwingWorker<List<Servidor>, Void>() {
-            private String errorMessage;
-
-            @Override
-            protected List<Servidor> doInBackground() {
-                try {
-                    return service.obtenerServidoresUsuario();
-                } catch (Exception ex) {
-                    errorMessage = ex.getMessage();
-                    return Collections.emptyList();
-                }
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    List<Servidor> servidores = get();
-                    if (errorMessage != null) {
-                        panel.mostrarError(errorMessage);
-                    } else {
-                        panel.mostrarServidores(servidores);
-                    }
-                } catch (Exception ex) {
-                    panel.mostrarError("Error al cargar servidores: " + ex.getMessage());
-                } finally {
-                    panel.setLoadingState(false);
-                }
-            }
-        }.execute();
+        new CargaServer(service, this).execute();
     }
 
     public void agregarServidor(String direccion) {
-        panel.setLoadingState(true);
+        notificarObservadores("LOADING", true);
         new SwingWorker<Servidor, Void>() {
             private String errorMessage;
 
@@ -84,22 +72,21 @@ public class ServidorListController {
                 try {
                     Servidor servidor = get();
                     if (servidor != null) {
-                        panel.agregarServidorALista(servidor);
-                        panel.mostrarMensaje("Servidor agregado: " + servidor.getDireccion() + ":" + servidor.getPuerto());
+                        notificarObservadores("SERVIDOR_AGREGADO", servidor);
                     } else {
-                        panel.mostrarError(errorMessage);
+                        notificarObservadores("AGREGAR_ERROR", errorMessage);
                     }
                 } catch (Exception ex) {
-                    panel.mostrarError("Error inesperado al agregar servidor: " + ex.getMessage());
+                    notificarObservadores("AGREGAR_ERROR", "Error inesperado al agregar servidor: " + ex.getMessage());
                 } finally {
-                    panel.setLoadingState(false);
+                    notificarObservadores("LOADING", false);
                 }
             }
         }.execute();
     }
 
     public void eliminarServidor(Servidor servidor) {
-        panel.setLoadingState(true);
+        notificarObservadores("LOADING", true);
         new SwingWorker<Void, Void>() {
             private String errorMessage;
 
@@ -116,23 +103,30 @@ public class ServidorListController {
             @Override
             protected void done() {
                 if (errorMessage == null) {
-                    panel.eliminarServidorDeLista(servidor);
-                    panel.mostrarMensaje("Servidor eliminado");
+                    notificarObservadores("SERVIDOR_ELIMINADO", servidor);
+                    notificarObservadores("MENSAJE", "Servidor eliminado");
                 } else {
-                    panel.mostrarError("Error al eliminar servidor: " + errorMessage);
+                    notificarObservadores("ELIMINAR_ERROR", "Error al eliminar servidor: " + errorMessage);
                 }
-                panel.setLoadingState(false);
+                notificarObservadores("LOADING", false);
             }
         }.execute();
     }
 
     public void conectarServidor(Servidor servidor) {
-        panel.setLoadingState(true);
-        sessionManager.setServidor(servidor);
-        SwingUtilities.invokeLater(() -> {
-            panel.setLoadingState(false);              // quitamos el loading
-            panel.abrirVentanaConexion(servidor);      // abre adminPanel en nueva ventana
-        });
-    }
+        notificarObservadores("LOADING", true);
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                sessionManager.setServidor(servidor);
+                return null;
+            }
 
+            @Override
+            protected void done() {
+                notificarObservadores("LOADING", false);
+                notificarObservadores("CONECTAR_SERVIDOR", servidor);
+            }
+        }.execute();
+    }
 }

@@ -1,8 +1,11 @@
-package com.admin.remoto.services.business;
+package com.admin.remoto.services.panel;
 
 import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.models.Evento;
+import com.admin.remoto.services.business.ConexionService;
+import com.admin.remoto.services.business.ImageReceiver;
+import com.admin.remoto.services.business.LogsReceiver;
 import org.springframework.stereotype.Service;
 
 import java.awt.image.BufferedImage;
@@ -11,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 
 @Service
-public class AdministracionService implements Observador {
+public class AdministracionService implements Observador<Evento, Void> {
 
     private final ConexionService conexionService;
     private final LogsReceiver logsReceiver;
@@ -32,7 +35,7 @@ public class AdministracionService implements Observador {
     }
 
     @Override
-    public void actualizar(Evento evento) {
+    public void actualizar(Evento evento, Void v) {
         switch (evento.getTipo()) {
             case OPEN -> controller.mostrarMensaje("Conexión abierta");
             case TEXT -> {
@@ -57,8 +60,13 @@ public class AdministracionService implements Observador {
         }
     }
 
-    public void conectar(String host, int port) throws Exception {
-        conexionService.connect("ws://" + host + ":" + port + "/ws");
+    public void conectar(String host, int port) {
+        try {
+            conexionService.connect("ws://" + host + ":" + port + "/ws");
+        } catch (Exception e) {
+            // Aquí puedes manejarla, loguear, o volver a lanzar runtime
+            throw new RuntimeException(e);
+        }
     }
 
     public void desconectar() {
