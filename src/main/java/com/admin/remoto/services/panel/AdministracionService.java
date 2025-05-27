@@ -64,7 +64,6 @@ public class AdministracionService implements Observador<Evento, Void> {
         try {
             conexionService.connect("ws://" + host + ":" + port + "/ws");
         } catch (Exception e) {
-            // Aquí puedes manejarla, loguear, o volver a lanzar runtime
             throw new RuntimeException(e);
         }
     }

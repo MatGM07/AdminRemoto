@@ -2,7 +2,6 @@ package com.admin.remoto.swing;
 
 import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.services.business.EscaladoService;
-import com.admin.remoto.services.business.NavigationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -15,7 +14,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
+
 
 
 @Component
@@ -122,7 +121,7 @@ public class AdministracionPanel extends JPanel {
                     logArea.setCaretPosition(doc.getLength());
                 }
             } catch (BadLocationException e) {
-                e.printStackTrace(); // esto se puede enrutar a log también
+                e.printStackTrace();
             }
         });
     }

@@ -53,13 +53,11 @@ public class ServidorListPanel extends JPanel implements Observador<String, Obje
         topPanel.add(logoutButton, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-        // Center: list
         listModel = new DefaultListModel<>();
         servidorList = new JList<>(listModel);
         servidorList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         add(new JScrollPane(servidorList), BorderLayout.CENTER);
 
-        // Bottom: actions + status
         deleteButton = new JButton("Eliminar"); deleteButton.setEnabled(false);
         connectButton = new JButton("Conectar"); connectButton.setEnabled(false);
         JPanel buttonPanel = new JPanel(new FlowLayout());

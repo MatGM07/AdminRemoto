@@ -45,7 +45,6 @@ public class MyWebSocketHandler implements WebSocketHandler {
                 }
             });
         } else if (message instanceof TextMessage) {
-            // Opcional: manejar mensajes de texto también si los usas
             System.out.println("Texto recibido: " + ((TextMessage) message).getPayload());
         }
     }
