@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SessionManager {
     private static SessionManager instance;
-    private Usuario usuario; // Almacenamos el objeto Usuario
+    private Usuario usuario;
     private Sesion sesion;
     private Servidor servidor;
 

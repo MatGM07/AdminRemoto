@@ -2,7 +2,7 @@ package com.admin.remoto.services.business;
 
 import com.admin.remoto.Observador.Observable;
 import com.admin.remoto.Observador.Observador;
-import com.admin.remoto.models.Evento;
+import com.admin.remoto.websocket.Evento;
 import com.admin.remoto.models.Sesion;
 import com.admin.remoto.services.persistence.SesionService;
 import org.java_websocket.client.WebSocketClient;
@@ -88,7 +88,7 @@ public class ConexionService implements Observable<Evento,Void> {
 
         } catch (Exception e) {
             notificarObservadores(new Evento(Evento.Tipo.ERROR, e), v);
-            throw e; // ✅ Propagar hacia arriba
+            throw e;
         }
     }
 

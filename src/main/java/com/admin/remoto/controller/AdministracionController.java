@@ -1,6 +1,7 @@
 package com.admin.remoto.controller;
 
 
+import com.admin.remoto.services.business.FileSelector;
 import com.admin.remoto.services.business.FileSender;
 import com.admin.remoto.services.business.SessionManager;
 import com.admin.remoto.models.*;
@@ -45,16 +46,17 @@ public class AdministracionController {
     private final SessionManager sessionManager;
     private final SesionService sesionService;
     private final FileSender fileSender;
-    private boolean conectado;
+    private final FileSelector fileSelector;
 
     @Autowired
-    public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender) {
+    public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender, FileSelector fileSelector) {
         this.service = service;
         this.logLoteService = logLoteService;
         this.service.setController(this);
         this.sessionManager = sessionManager;
         this.sesionService = sesionService;
         this.fileSender = fileSender;
+        this.fileSelector = fileSelector;
 
         scheduler.scheduleAtFixedRate(this::guardarLoteLogs, 30, 30, TimeUnit.SECONDS);
     }
@@ -157,16 +159,12 @@ public class AdministracionController {
     }
 
     public void seleccionarYTransferirArchivo(java.awt.Component parentComponent) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Selecciona un archivo para transferir");
-        int result = fileChooser.showOpenDialog(parentComponent);
+        File archivo = fileSelector.seleccionarArchivo(parentComponent);
 
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            panel.log("INFO", "Archivo seleccionado: " + selectedFile.getAbsolutePath());
-
+        if (archivo != null) {
+            panel.log("INFO", "Archivo seleccionado: " + archivo.getAbsolutePath());
             try {
-                fileSender.enviarArchivo(selectedFile);
+                fileSender.enviarArchivo(archivo);
                 panel.log("INFO", "Archivo enviado correctamente.");
             } catch (Exception ex) {
                 panel.log("ERROR", "Error al enviar el archivo: " + ex.getMessage());

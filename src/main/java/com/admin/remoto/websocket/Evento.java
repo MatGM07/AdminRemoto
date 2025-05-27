@@ -1,4 +1,4 @@
-package com.admin.remoto.models;
+package com.admin.remoto.websocket;
 
 public class Evento {
     public enum Tipo {

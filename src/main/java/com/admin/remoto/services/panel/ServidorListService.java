@@ -2,7 +2,7 @@ package com.admin.remoto.services.panel;
 
 import com.admin.remoto.models.Servidor;
 import com.admin.remoto.models.Usuario;
-import com.admin.remoto.services.business.ServidorService;
+import com.admin.remoto.services.persistence.ServidorService;
 import com.admin.remoto.services.business.SessionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

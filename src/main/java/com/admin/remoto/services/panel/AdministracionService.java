@@ -2,7 +2,7 @@ package com.admin.remoto.services.panel;
 
 import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.controller.AdministracionController;
-import com.admin.remoto.models.Evento;
+import com.admin.remoto.websocket.Evento;
 import com.admin.remoto.services.business.ConexionService;
 import com.admin.remoto.services.business.ImageReceiver;
 import com.admin.remoto.services.business.LogsReceiver;
@@ -19,11 +19,9 @@ public class AdministracionService implements Observador<Evento, Void> {
     private final ConexionService conexionService;
     private final LogsReceiver logsReceiver;
     private final ImageReceiver imageProcessor;
-    private AdministracionController controller; // Ahora delega
+    private AdministracionController controller;
 
-    public AdministracionService(ConexionService conexionService,
-                                 LogsReceiver logsReceiver,
-                                 ImageReceiver imageProcessor) {
+    public AdministracionService(ConexionService conexionService, LogsReceiver logsReceiver, ImageReceiver imageProcessor) {
         this.conexionService = conexionService;
         this.logsReceiver = logsReceiver;
         this.imageProcessor = imageProcessor;
