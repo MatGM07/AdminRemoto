@@ -1,5 +1,6 @@
 package com.admin.remoto.services.business;
 
+import com.admin.remoto.models.Servidor;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -15,26 +16,22 @@ import java.io.File;
 @Component
 public class FileSender {
 
-    private final SessionManager sessionManager;
-
-    @Autowired
-    public FileSender(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
+    public FileSender() {
     }
 
-    public void enviarArchivo(File file) throws Exception {
+    public void enviarArchivo(File file, Servidor servidor) throws Exception {
         if (file == null || !file.exists()) {
             throw new IllegalArgumentException("El archivo no existe o es null.");
         }
-
-        if (sessionManager.getServidor() == null) {
-            throw new IllegalStateException("No hay servidor seleccionado en la sesión.");
+        if (servidor == null
+                || servidor.getDireccion() == null
+                || servidor.getPuerto() == null) {
+            throw new IllegalStateException("El servidor no está bien definido.");
         }
 
-        String host = sessionManager.getServidor().getDireccion();
-        String puerto = sessionManager.getServidor().getPuerto();
+        String host = servidor.getDireccion();
+        String puerto = servidor.getPuerto();
         String targetUrl = "http://" + host + ":" + puerto + "/upload";
-        System.out.println(targetUrl);
 
         HttpPost post = new HttpPost(targetUrl);
 
@@ -44,13 +41,11 @@ public class FileSender {
 
         post.setEntity(entity);
 
-        System.out.println(">>> [DEBUG] Content-Type del request: " + entity.getContentType());
-
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             client.execute(post, response -> {
                 int statusCode = response.getCode();
-                System.out.println("Respuesta del servidor: " + statusCode);
                 String responseBody = EntityUtils.toString(response.getEntity());
+                System.out.println("Respuesta del servidor (" + targetUrl + "): " + statusCode);
                 System.out.println("Cuerpo de la respuesta: " + responseBody);
                 return null;
             });

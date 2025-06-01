@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Service
 public class AdministracionService implements Observador<Evento, Void> {
@@ -60,15 +61,15 @@ public class AdministracionService implements Observador<Evento, Void> {
 
     public void conectar(String host, int port) {
         try {
-            conexionService.connect("ws://" + host + ":" + port + "/ws");
+            conexionService.connect(host, port);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void desconectar() {
+    public void desconectar(String host, int port) {
         controller.guardarLoteLogs();
-        conexionService.disconnect();
+        conexionService.disconnect(host, port);
     }
 
     public Map<String, String> procesarMensajeJson(String json) {

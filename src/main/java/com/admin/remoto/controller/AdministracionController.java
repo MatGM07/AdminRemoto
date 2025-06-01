@@ -9,6 +9,7 @@ import com.admin.remoto.services.panel.AdministracionService;
 import com.admin.remoto.services.persistence.LogLoteService;
 import com.admin.remoto.services.persistence.SesionService;
 import com.admin.remoto.swing.AdministracionPanel;
+import com.admin.remoto.websocket.Evento;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.*;
+import java.util.function.Consumer;
 
 
 @Component
@@ -47,6 +49,8 @@ public class AdministracionController {
     private final SesionService sesionService;
     private final FileSender fileSender;
     private final FileSelector fileSelector;
+    private Sesion currentSesion;
+    private Servidor currentServidor;
 
     @Autowired
     public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender, FileSelector fileSelector) {
@@ -65,41 +69,92 @@ public class AdministracionController {
         this.panel = panel;
     }
 
-    public void conectarAServidor(String host, int port) {
+    public void conectarAServidor(Servidor servidor, Consumer<Boolean> callback) {
+        String host = servidor.getDireccion();
+        int port = Integer.parseInt(servidor.getPuerto());
+
+        // 1) Validar si la dirección ya está en uso
+        if (sessionManager.direccionOcupada(host, port)) {
+            System.out.println("REPETIDA");
+            // Informa al panel (o quien sea) que hubo un error y devolvemos false
+            callback.accept(false);
+            return;
+        }
+
+        // 2) Realizar la conexión en segundo plano
         new SwingWorker<Void, Void>() {
             private String errorMessage;
+            private boolean conexionExitosa = false;
 
             @Override
             protected Void doInBackground() {
+                System.out.println("[DEBUG] Iniciando conexión...");
                 try {
-                     service.conectar(host, port);
+                    service.conectar(host, port);
+                    System.out.println("[DEBUG] Conexión completada.");
+                    conexionExitosa = true;
                 } catch (Exception ex) {
                     errorMessage = ex.getMessage();
+                    System.out.println("[DEBUG] Error al conectar: " + errorMessage);
+                    conexionExitosa = false;
                 }
                 return null;
             }
 
             @Override
             protected void done() {
-                if (errorMessage != null) {
+                if (!conexionExitosa || errorMessage != null) {
+                    // Hubo error al conectar con WebSocket
                     panel.mostrarError("Error al conectar: " + errorMessage);
-                    sessionManager.clearServidor();
+                    callback.accept(false);
                 } else {
-                    panel.mostrarMensaje("Conectado a " + host + ":" + port);
+                    // Conexión WebSocket exitosa: creamos y guardamos la Sesión
                     Sesion sesion = new Sesion();
                     sesion.setFechaHoraInicio(LocalDateTime.now());
                     sesion.setUsuario(sessionManager.getUsuario());
-                    sesion.setServidor(sessionManager.getServidor());
+                    sesion.setServidor(servidor);
+
                     sesionService.guardar(sesion);
-                    sessionManager.setSesion(sesion);
+                    currentSesion = sesion;
+                    currentServidor = servidor;
+                    sessionManager.addSesion(sesion, servidor);
+
+                    panel.mostrarMensaje("Conectado a " + host + ":" + port);
+                    // Informamos que la conexión fue exitosa
+                    callback.accept(true);
                 }
             }
         }.execute();
     }
 
-    public void desconectar() {
-        service.desconectar();
+    public void desconectar(String host, int port) {
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+
+                if (currentSesion != null) {
+                    currentSesion.setFechaHoraFin(LocalDateTime.now());
+                    sesionService.actualizar(currentSesion.getId(), currentSesion);
+                }
+
+                if (currentSesion != null) {
+                    sessionManager.removeSesion(currentSesion);
+                }
+
+                // 3) La desconexión WebSocket (pool) recibe host/port:
+                service.desconectar(host, port);
+
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                // Aquí muestras la vista de “volver a lista” (AdminPanel se encarga de cerrar su ventana, etc.)
+                // por ejemplo panel.mostrarMensaje("Desconectado de " + host + ":" + port);
+            }
+        }.execute();
     }
+
 
     public void mostrarMensaje(String mensaje) {
         panel.mostrarMensaje(mensaje);
@@ -122,16 +177,21 @@ public class AdministracionController {
     }
 
     public void recibirImagen(BufferedImage img) {
-        if (img != null) {
-            panel.actualizarImagen(img);
-        } else {
-            panel.mostrarError("Imagen recibida no válida");
+        try {
+            if (img != null) {
+                panel.actualizarImagen(img);
+            } else {
+                mostrarError("Imagen recibida no válida");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("Error inesperado al actualizar imagen: " + e.getMessage());
         }
     }
 
     public void guardarLoteLogs() {
         if (bufferLogs.isEmpty()) return;
-        if (sessionManager.getSesion()==null) return;
+        if (currentSesion == null) return;
 
         long timestampFinMillis = System.currentTimeMillis();
         try {
@@ -143,7 +203,9 @@ public class AdministracionController {
             lote.setTimestampFin(millisToDateTime(timestampFinMillis));
             lote.setUsuario(current);
             lote.setContenidoJson(jsonLote);
-            lote.setSesion(sessionManager.getSesion());
+
+            // Aquí ya no uso sessionManager.getSesion(), sino la que me pasaron
+            lote.setSesion(currentSesion);
 
             logLoteService.guardarLote(lote);
 
@@ -164,7 +226,7 @@ public class AdministracionController {
         if (archivo != null) {
             panel.log("INFO", "Archivo seleccionado: " + archivo.getAbsolutePath());
             try {
-                fileSender.enviarArchivo(archivo);
+                fileSender.enviarArchivo(archivo,currentServidor);
                 panel.log("INFO", "Archivo enviado correctamente.");
             } catch (Exception ex) {
                 panel.log("ERROR", "Error al enviar el archivo: " + ex.getMessage());

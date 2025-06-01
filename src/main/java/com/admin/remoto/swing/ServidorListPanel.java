@@ -41,6 +41,7 @@ public class ServidorListPanel extends JPanel implements Observador<String, Obje
     private void initUI() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
         JPanel topPanel = new JPanel(new BorderLayout(5, 0));
         direccionField = new JTextField(20);
         addButton = new JButton("Agregar servidor");
@@ -63,7 +64,8 @@ public class ServidorListPanel extends JPanel implements Observador<String, Obje
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.add(connectButton);
         buttonPanel.add(deleteButton);
-        statusLabel = new JLabel(" "); statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        statusLabel = new JLabel(" ");
+        statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.add(buttonPanel, BorderLayout.CENTER);
         bottomPanel.add(statusLabel, BorderLayout.SOUTH);

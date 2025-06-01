@@ -1,6 +1,7 @@
 package com.admin.remoto.swing;
 
 import com.admin.remoto.controller.AdministracionController;
+import com.admin.remoto.models.Servidor;
 import com.admin.remoto.services.business.EscaladoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -14,7 +15,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-
+import java.util.function.Consumer;
 
 
 @Component
@@ -25,6 +26,7 @@ public class AdministracionPanel extends JPanel {
     private final JButton backButton = new JButton("Volver a la lista de servidores");
     private final JButton transferFileButton = new JButton("Transferir archivo");
     private final JCheckBox autoScrollCheckBox = new JCheckBox("Auto-scroll logs", true);
+    private Servidor currentServidor;
 
     private final AdministracionController controller;
     private Runnable onVolverALista;
@@ -49,7 +51,7 @@ public class AdministracionPanel extends JPanel {
         logArea.setEditable(false);
         logArea.setFont(new Font("Arial", Font.PLAIN, 12));
         logArea.setBackground(new Color(43, 45, 48));
-        logArea.setForeground(Color.WHITE); // color por defecto
+        logArea.setForeground(Color.WHITE);
 
         JScrollPane logPane = new JScrollPane(logArea);
         logPane.setPreferredSize(new Dimension(500, 0));
@@ -67,9 +69,24 @@ public class AdministracionPanel extends JPanel {
 
     }
 
-    public void iniciarConexion(String host, int port) {
-        controller.conectarAServidor(host, port);
+    public void iniciarConexion(Servidor servidor, Consumer<Boolean> callback) {
+        // Guardamos el servidor que se quiere conectar
+        this.currentServidor = servidor;
+
+        // Invocamos el método del controlador que admite callback
+        controller.conectarAServidor(servidor, exito -> {
+            if (!exito) {
+                // Si falló, mostramos error en este panel (opcional), y devolvemos false
+                mostrarError("No se pudo conectar a " + servidor.getDireccion() + ":" + servidor.getPuerto());
+                callback.accept(false);
+            } else {
+                // Conexión exitosa: informamos al callback que puede mostrar la ventana
+                callback.accept(true);
+            }
+        });
     }
+
+
 
     public void actualizarImagen(BufferedImage img) {
         SwingUtilities.invokeLater(() -> {
@@ -135,7 +152,13 @@ public class AdministracionPanel extends JPanel {
     }
 
     public void volverAListaServidores() {
-        controller.desconectar();
+        if (currentServidor != null) {
+            System.out.println(currentServidor);
+            String host = currentServidor.getDireccion();
+            int port = Integer.parseInt(currentServidor.getPuerto());
+            controller.desconectar(host, port);
+        }
+
         if (onVolverALista != null) onVolverALista.run();
     }
 

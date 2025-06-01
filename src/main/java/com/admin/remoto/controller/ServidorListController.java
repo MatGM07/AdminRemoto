@@ -118,7 +118,6 @@ public class ServidorListController implements Observable<String, Object> {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-                sessionManager.setServidor(servidor);
                 return null;
             }
 
