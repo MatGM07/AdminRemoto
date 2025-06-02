@@ -1,4 +1,5 @@
-package com.admin.remoto.models;
+package com.remoto.reportes.models;
+
 
 import jakarta.persistence.*;
 

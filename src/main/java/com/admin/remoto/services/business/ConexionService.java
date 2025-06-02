@@ -97,5 +97,18 @@ public class ConexionService {
             });
         }
     }
+
+    public void solicitarVideoDesdeCliente(String host, int port) {
+        String clave = host + ":" + port;
+        PooledWebSocketClient client = clientesEnUso.get(clave);
+        if (client != null && client.isOpen()) {
+            try {
+                client.send("{\"comando\": \"enviar_video\"}");
+                System.out.println(">>> [WS] Solicitud de envío de video enviada al cliente: " + clave);
+            } catch (Exception e) {
+                System.err.println(">>> [ERROR] No se pudo enviar comando al cliente: " + e.getMessage());
+            }
+        }
+    }
 }
 

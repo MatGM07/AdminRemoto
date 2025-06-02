@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class VideoServiceImpl implements VideoService, Observable<Evento, Void> {
@@ -32,12 +33,14 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
     private final VideoRepositorio videoRepository;
     private final List<Observador<Evento, Void>> observadores = new ArrayList<>();
     private final HttpServletRequest request;
+    private final SessionManager sessionManager;
 
 
     @Autowired
-    public VideoServiceImpl(VideoRepositorio videoRepository, HttpServletRequest request) {
+    public VideoServiceImpl(VideoRepositorio videoRepository, HttpServletRequest request, SessionManager sessionManager) {
         this.request = request;
         this.videoRepository = videoRepository;
+        this.sessionManager = sessionManager;
     }
 
     @Override
@@ -65,14 +68,16 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
             throw new IllegalArgumentException("El archivo está vacío o es null.");
         }
 
-        // 1) Extraer metadatos
         String originalName = file.getOriginalFilename();
         long sizeBytes = file.getSize();
         LocalDateTime now = LocalDateTime.now();
         String timestamp = now.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String storedFileName = timestamp + "_" + originalName;
 
-        // 2) Guardar en disco
+        // Lee los bytes primero (antes de transferir el archivo temporal)
+        byte[] data = file.getBytes();
+
+        // Guardar en disco
         File uploadsDir = new File(System.getProperty("user.dir"), "videos");
         if (!uploadsDir.exists()) {
             boolean creada = uploadsDir.mkdirs();
@@ -81,40 +86,53 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
 
         File destino = new File(uploadsDir, storedFileName);
         try {
-            file.transferTo(destino);
+            file.transferTo(destino);  // transferir el archivo (luego de getBytes())
             System.out.println(">>> [DEBUG] Archivo transferido exitosamente a: " + destino.getAbsolutePath());
         } catch (IOException ioEx) {
             System.out.println(">>> [ERROR] Error al guardar en disco: " + ioEx.getMessage());
             throw ioEx;
         }
-        byte[] data = file.getBytes();
-        Video videoEntity = new Video(storedFileName, sizeBytes, now, data);
 
-        // 3.1) Obtener la sesión activa desde SessionManager
-        SessionManager sessionManager = SessionManager.getInstance();
+        Video videoEntity = new Video(storedFileName, sizeBytes, now, data);
 
         String ipCliente = request.getRemoteAddr();
 
-// Buscar la sesión cuya dirección coincide (ignorando el puerto)
-        Optional<Sesion> sesionCorrespondiente = sessionManager.getSesionesActivas().stream()
+        System.out.println(">>> [DEBUG] IP del cliente que sube el video: " + ipCliente);
+
+        Set<Sesion> sesionesActivas = sessionManager.getSesionesActivas();
+        System.out.println(">>> [DEBUG] Número de sesiones activas: " + sesionesActivas.size());
+
+        for (Sesion s : sesionesActivas) {
+            Servidor servidor = sessionManager.getServidorDeSesion(s);
+            System.out.println(">>> [DEBUG] Sesión ID: " + s.getId()
+                    + " | Servidor asociado: " + (servidor != null ? servidor.getDireccion() : "null"));
+        }
+
+        String ipClienteNormalizada = normalizarDireccion(ipCliente);
+
+        Optional<Sesion> sesionCorrespondiente = sesionesActivas.stream()
                 .filter(s -> {
                     Servidor servidor = sessionManager.getServidorDeSesion(s);
-                    return servidor != null && servidor.getDireccion().equals(ipCliente);
+                    if (servidor == null) return false;
+
+                    String direccionServidorNormalizada = normalizarDireccion(servidor.getDireccion());
+                    return direccionServidorNormalizada.equals(ipClienteNormalizada);
                 })
                 .findFirst();
 
         if (sesionCorrespondiente.isPresent()) {
+            System.out.println(">>> [DEBUG] Sesión encontrada para la IP: " + ipCliente
+                    + " -> Sesión ID: " + sesionCorrespondiente.get().getId());
             videoEntity.setSesion(sesionCorrespondiente.get());
         } else {
             System.out.println(">>> [WARN] No se encontró una sesión activa para la IP: " + ipCliente);
         }
 
+        System.out.println("sesion del vidio guardado: "+videoEntity.getSesion());
         Video saved = videoRepository.save(videoEntity);
 
         notificarObservadores(new VideoEvento(saved.getId(), videoEntity.getSesion()), null);
 
-
-        // 4) Notificar UI (en EDT de Swing)
         SwingUtilities.invokeLater(() -> {
             JOptionPane.showMessageDialog(
                     null,
@@ -125,5 +143,11 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
         });
 
         return saved;
+    }
+
+    private String normalizarDireccion(String direccion) {
+        if (direccion == null) return "";
+        if (direccion.equalsIgnoreCase("localhost")) return "127.0.0.1";
+        return direccion;
     }
 }

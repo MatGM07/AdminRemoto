@@ -22,12 +22,14 @@ public class AdministracionService {
     private final LogsReceiver logsReceiver;
     private final ImageReceiver imageProcessor;
 
+
     private final ConcurrentMap<String, Observador<Evento, Void>> observadoresPorClave = new ConcurrentHashMap<>();
 
     @Autowired
     public AdministracionService(LogsReceiver logsReceiver, ImageReceiver imageProcessor) {
         this.logsReceiver = logsReceiver;
         this.imageProcessor = imageProcessor;
+
     }
 
     /** Llamar cuando un controlador quiere registrarse para recibir eventos de `host:port`. */
@@ -55,6 +57,8 @@ public class AdministracionService {
     public Map<String, String> procesarMensajeJson(String json) {
         return logsReceiver.parse(json);
     }
+
+
 
     public BufferedImage procesarImagen(ByteBuffer buffer) throws IOException {
         return imageProcessor.fromBuffer(buffer);

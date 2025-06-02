@@ -65,6 +65,15 @@
 <body>
 <h2>Reportes de Logs de la Sesión [[${idSesion}]]</h2>
 
+<div th:if="${videoBase64 != null}">
+    <h3>Video de la sesión</h3>
+    <video width="640" height="360" controls>
+        <source th:src="'data:video/mp4;base64,' + ${videoBase64}" type="video/mp4" />
+        Tu navegador no soporta el tag de video.
+    </video>
+</div>
+<br><br>
+
 <div th:each="logList, loteStat : ${logsParseados}">
     <details>
         <summary>Lote de logs [[${loteStat.index + 1}]]</summary>

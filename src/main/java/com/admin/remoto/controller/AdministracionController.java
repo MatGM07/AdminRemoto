@@ -144,12 +144,12 @@ public class AdministracionController implements Observador<Evento, Void> {
             @Override
             protected Void doInBackground() {
                 if (currentSesion != null) {
-                    // 1) Crear un latch que espera 1 evento
+                    solicitarVideo(host, port);
                     esperaVideoGuardado = new CountDownLatch(1);
 
                     try {
                         // 2) Esperar hasta que el video sea guardado (máx 10 segundos)
-                        boolean recibido = esperaVideoGuardado.await(10, TimeUnit.SECONDS);
+                        boolean recibido = esperaVideoGuardado.await(20, TimeUnit.SECONDS);
                         if (!recibido) {
                             System.out.println(">>> [WARN] Tiempo de espera agotado para el guardado del video.");
                         }
@@ -175,7 +175,11 @@ public class AdministracionController implements Observador<Evento, Void> {
     @Override
     public void actualizar(Evento evento, Void v) {
         if (evento instanceof VideoEvento ve) {
-            if (ve.getTipoVideo() == VideoEvento.TipoVideo.GUARDADO && ve.getSesion() != null && ve.getSesion().getId().equals(currentSesion.getId())) {
+            if (ve.getTipoVideo() == VideoEvento.TipoVideo.GUARDADO
+                    && ve.getSesion() != null
+                    && currentSesion != null
+                    && ve.getSesion().getId().equals(currentSesion.getId())) {
+
                 System.out.println("Video guardado con ID: " + ve.getVideoId());
                 if (esperaVideoGuardado != null) {
                     esperaVideoGuardado.countDown(); // libera el hilo que espera
@@ -291,5 +295,11 @@ public class AdministracionController implements Observador<Evento, Void> {
         } else {
             panel.log("INFO", "Transferencia cancelada por el usuario.");
         }
+    }
+
+    public void solicitarVideo(String host, Integer port){
+        Set<Sesion> sesionesActivas = sessionManager.getSesionesActivas();
+        System.out.println(">>> [DEBUG] Número de sesiones EN EL CONTROLLER activas: " + sesionesActivas.size());
+        conexionService.solicitarVideoDesdeCliente(host, port);
     }
 }

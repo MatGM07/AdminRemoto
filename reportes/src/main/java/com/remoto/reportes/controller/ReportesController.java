@@ -7,7 +7,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.remoto.reportes.models.LogEntry;
 import com.remoto.reportes.models.LogLote;
 import com.remoto.reportes.models.Usuario;
+import com.remoto.reportes.models.Video;
 import com.remoto.reportes.services.LogLoteService;
+import com.remoto.reportes.services.VideoService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,10 +27,13 @@ public class ReportesController {
 
     private SessionManager sessionManager;
     private LogLoteService logLoteService;
+    private VideoService videoService;
 
-    public ReportesController(SessionManager sessionManager, LogLoteService logLoteService){
+
+    public ReportesController(SessionManager sessionManager, LogLoteService logLoteService, VideoService videoService){
         this.sessionManager = sessionManager;
         this.logLoteService = logLoteService;
+        this.videoService = videoService;
     }
 
     @GetMapping("/reportes/{idSesion}")
@@ -37,7 +43,6 @@ public class ReportesController {
         List<LogLote> logs = logLoteService.obtenerPorSesionCliente(idSesion,current.getId());
 
         ObjectMapper mapper = new ObjectMapper();
-
         mapper.registerModule(new JavaTimeModule());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
@@ -52,6 +57,13 @@ public class ReportesController {
                 e.printStackTrace();
                 logsParseados.add(Collections.emptyList());
             }
+        }
+
+        List<Video> videos = videoService.obtenerPorSesionId(idSesion);
+        if (!videos.isEmpty()) {
+            Video video = videos.get(0);
+            String base64Video = Base64.getEncoder().encodeToString(video.getData());
+            model.addAttribute("videoBase64", base64Video);
         }
 
         model.addAttribute("logsParseados", logsParseados);
