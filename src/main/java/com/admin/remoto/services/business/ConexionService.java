@@ -2,6 +2,7 @@ package com.admin.remoto.services.business;
 
 import com.admin.remoto.Observador.Observable;
 import com.admin.remoto.Observador.Observador;
+import com.admin.remoto.services.panel.AdministracionService;
 import com.admin.remoto.websocket.Evento;
 import com.admin.remoto.models.Sesion;
 import com.admin.remoto.services.persistence.SesionService;
@@ -24,55 +25,41 @@ import java.util.function.Consumer;
 
 
 @Component
-public class ConexionService implements Observable<Evento,Void> {
-    private WebSocketClient socket;
+public class ConexionService {
     private final WebSocketClientPool clientPool;
-    private final Map<String, PooledWebSocketClient> clientesEnUso = new ConcurrentHashMap<>();
-    private final List<Observador> observadores = new ArrayList<>();
     private final SessionManager sessionManager;
+    private final AdministracionService administracionService;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    @Autowired
-    private final SesionService sesionService;
+    // Mapa para tener acceso al PooledWebSocketClient por clave (host:port)
+    private final ConcurrentMap<String, PooledWebSocketClient> clientesEnUso = new ConcurrentHashMap<>();
 
     @Autowired
-    public ConexionService(SessionManager sessionManager, SesionService sesionService, WebSocketClientPool clientPool) {
+    public ConexionService(SessionManager sessionManager,
+                           AdministracionService administracionService,
+                           WebSocketClientPool clientPool) {
         this.sessionManager = sessionManager;
-        this.sesionService = sesionService;
+        this.administracionService = administracionService;
         this.clientPool = clientPool;
     }
 
-    @Override
-    public void agregarObservador(Observador observador) {
-        observadores.add(observador);
-    }
-
-    @Override
-    public void eliminarObservador(Observador observador) {
-        observadores.remove(observador);
-    }
-
-    @Override
-    public void notificarObservadores(Evento evento, Void v) {
-        for (Observador obs : observadores) {
-            obs.actualizar(evento, v);
-        }
-    }
-
+    /**
+     * Abre la conexión WebSocket a host:port y le pasa un callback que reenvía
+     * cada evento a administracionService.recibirEventoPara(clave, evento).
+     */
     public void connect(String host, int port) throws Exception {
         String clave = host + ":" + port;
 
-        // Pedimos un cliente del pool (échara excepción si ya hay uno activo en la misma clave).
-        Consumer<Evento> reenvio = evento -> {
-            System.out.println("[DEBUG] Evento recibido: " + evento.getTipo());
-            notificarObservadores(evento, null);
-        };
+        // Creamos un Consumer<Evento> que sabe a qué “clave” pertenece
+        Consumer<Evento> reenvio = evento -> administracionService.recibirEventoPara(clave, evento);
 
+        // Pedimos un cliente del pool (o excepción si ya existe uno para esa clave)
         PooledWebSocketClient client = clientPool.borrowClient(host, port, reenvio);
 
+        // Conectamos en un hilo separado
         CompletableFuture<Boolean> connectionFuture = CompletableFuture.supplyAsync(() -> {
             try {
-                return client.connectBlocking(); // Esto se ejecuta en un hilo separado
+                return client.connectBlocking();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return false;
@@ -80,43 +67,35 @@ public class ConexionService implements Observable<Evento,Void> {
         }, executorService);
 
         boolean ok = connectionFuture.get(10, TimeUnit.SECONDS);
-
         if (!ok) {
-            // ¡No devolver al pool!
             throw new IOException("No se pudo establecer conexión con " + clave);
         }
+
+        // Solo si conectó correctamente, lo guardamos en uso
         clientesEnUso.put(clave, client);
         clientPool.marcarClienteComoEnUso(client, clave);
     }
 
-
+    /**
+     * Cierra la conexión WebSocket (si existe) para host:port y devuelve el cliente al pool.
+     */
     public void disconnect(String host, int port) {
         String clave = host + ":" + port;
-        System.out.println("[DEBUG] Solicitando desconexión para " + clave);
-
         PooledWebSocketClient client = clientesEnUso.remove(clave);
-        if (client == null) {
-            System.out.println("[DEBUG] No hay cliente registrado en uso para " + clave);
-            return;
-        }
-
-        executorService.submit(() -> {
-            System.out.println("[DEBUG] Ejecutando desconexión async para " + clave);
-            if (client.isOpen()) {
+        if (client != null) {
+            executorService.submit(() -> {
                 try {
-                    client.closeBlocking();
-                    System.out.println("[DEBUG] Cerrando cliente para " + clave);
+                    if (client.isOpen()) {
+                        client.closeBlocking();
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    System.out.println("[DEBUG] InterruptedException al cerrar cliente");
                 }
-            } else {
-                System.out.println("[DEBUG] Cliente ya estaba cerrado: " + clave);
-            }
-
-            clientPool.returnClient(client);
-        });
+                clientPool.returnClient(client);
+                // También desvinculamos de AdministracionService para que no reciba más eventos
+                administracionService.eliminarObservador(clave);
+            });
+        }
     }
-
 }
 

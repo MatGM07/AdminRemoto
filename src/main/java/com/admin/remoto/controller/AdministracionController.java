@@ -1,6 +1,8 @@
 package com.admin.remoto.controller;
 
 
+import com.admin.remoto.Observador.Observador;
+import com.admin.remoto.services.business.ConexionService;
 import com.admin.remoto.services.business.FileSelector;
 import com.admin.remoto.services.business.FileSender;
 import com.admin.remoto.services.business.SessionManager;
@@ -13,11 +15,15 @@ import com.admin.remoto.websocket.Evento;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -35,9 +41,11 @@ import java.util.function.Consumer;
 
 
 @Component
-public class AdministracionController {
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class AdministracionController implements Observador<Evento, Void> {
 
-    private final AdministracionService service;
+    private final AdministracionService administracionService;
+    private final ConexionService conexionService;
     private AdministracionPanel panel;
     private final LogLoteService logLoteService;
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
@@ -53,10 +61,10 @@ public class AdministracionController {
     private Servidor currentServidor;
 
     @Autowired
-    public AdministracionController(AdministracionService service, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender, FileSelector fileSelector) {
-        this.service = service;
+    public AdministracionController(AdministracionService administracionService, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender, FileSelector fileSelector, ConexionService conexionService) {
+        this.conexionService = conexionService;
+        this.administracionService = administracionService;
         this.logLoteService = logLoteService;
-        this.service.setController(this);
         this.sessionManager = sessionManager;
         this.sesionService = sesionService;
         this.fileSender = fileSender;
@@ -72,30 +80,28 @@ public class AdministracionController {
     public void conectarAServidor(Servidor servidor, Consumer<Boolean> callback) {
         String host = servidor.getDireccion();
         int port = Integer.parseInt(servidor.getPuerto());
+        String clave = host + ":" + port;
 
-        // 1) Validar si la dirección ya está en uso
         if (sessionManager.direccionOcupada(host, port)) {
-            System.out.println("REPETIDA");
-            // Informa al panel (o quien sea) que hubo un error y devolvemos false
             callback.accept(false);
             return;
         }
 
-        // 2) Realizar la conexión en segundo plano
         new SwingWorker<Void, Void>() {
             private String errorMessage;
             private boolean conexionExitosa = false;
 
             @Override
             protected Void doInBackground() {
-                System.out.println("[DEBUG] Iniciando conexión...");
                 try {
-                    service.conectar(host, port);
-                    System.out.println("[DEBUG] Conexión completada.");
+                    // 1) Registramos este controller como observador para “clave”
+                    administracionService.agregarObservador(clave, AdministracionController.this);
+
+                    // 2) Abrimos la conexión WebSocket
+                    conexionService.connect(host, port);
                     conexionExitosa = true;
                 } catch (Exception ex) {
                     errorMessage = ex.getMessage();
-                    System.out.println("[DEBUG] Error al conectar: " + errorMessage);
                     conexionExitosa = false;
                 }
                 return null;
@@ -104,23 +110,22 @@ public class AdministracionController {
             @Override
             protected void done() {
                 if (!conexionExitosa || errorMessage != null) {
-                    // Hubo error al conectar con WebSocket
                     panel.mostrarError("Error al conectar: " + errorMessage);
+                    // Al fallar, eliminamos rápidamente al observador (en caso de que se haya agregado)
+                    administracionService.eliminarObservador(clave);
                     callback.accept(false);
                 } else {
-                    // Conexión WebSocket exitosa: creamos y guardamos la Sesión
+                    // Conexión WebSocket exitosa: creamos y guardamos Sesión
                     Sesion sesion = new Sesion();
                     sesion.setFechaHoraInicio(LocalDateTime.now());
                     sesion.setUsuario(sessionManager.getUsuario());
                     sesion.setServidor(servidor);
-
                     sesionService.guardar(sesion);
                     currentSesion = sesion;
                     currentServidor = servidor;
                     sessionManager.addSesion(sesion, servidor);
 
                     panel.mostrarMensaje("Conectado a " + host + ":" + port);
-                    // Informamos que la conexión fue exitosa
                     callback.accept(true);
                 }
             }
@@ -128,33 +133,53 @@ public class AdministracionController {
     }
 
     public void desconectar(String host, int port) {
+        String clave = host + ":" + port;
+
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
-
                 if (currentSesion != null) {
                     currentSesion.setFechaHoraFin(LocalDateTime.now());
                     sesionService.actualizar(currentSesion.getId(), currentSesion);
-                }
-
-                if (currentSesion != null) {
                     sessionManager.removeSesion(currentSesion);
                 }
-
-                // 3) La desconexión WebSocket (pool) recibe host/port:
-                service.desconectar(host, port);
-
+                // 1) Quitamos este controlador de los observadores de AdministracionService
+                administracionService.eliminarObservador(clave);
+                // 2) Cerramos WebSocket y devolvemos al pool
+                conexionService.disconnect(host, port);
                 return null;
-            }
-
-            @Override
-            protected void done() {
-                // Aquí muestras la vista de “volver a lista” (AdminPanel se encarga de cerrar su ventana, etc.)
-                // por ejemplo panel.mostrarMensaje("Desconectado de " + host + ":" + port);
             }
         }.execute();
     }
 
+
+    @Override
+    public void actualizar(Evento evento, Void v) {
+
+        switch (evento.getTipo()) {
+            case OPEN -> panel.mostrarMensaje("Conexión abierta");
+            case TEXT -> {
+                System.out.println("EL LOG LLEGO AL CONTROLLER");
+                String msg = (String) evento.getContenido();
+                Map<String, String> datos = administracionService.procesarMensajeJson(msg);
+                recibirTexto(datos, msg);
+            }
+            case BINARY -> {
+                try {
+                    BufferedImage img = administracionService.procesarImagen((ByteBuffer) evento.getContenido());
+                    panel.recibirImagen(img);
+                } catch (IOException e) {
+                    panel.mostrarError("Error al procesar imagen: " + e.getMessage());
+                }
+            }
+            case CLOSE -> panel.mostrarMensaje("Conexión cerrada: " + evento.getContenido());
+            case ERROR -> {
+                Exception ex = (Exception) evento.getContenido();
+                panel.mostrarError("Error WebSocket: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }
 
     public void mostrarMensaje(String mensaje) {
         panel.mostrarMensaje(mensaje);
@@ -165,7 +190,9 @@ public class AdministracionController {
     }
 
     public void recibirTexto(Map<String, String> jsonMsg, String raw) {
+        System.out.println("ELLOG LLEGO AL CONTROLLER");
         if ("log".equals(jsonMsg.get("type"))) {
+
             String logMessage = jsonMsg.get("message");
             LogEntry entry = new LogEntry("log", logMessage);
             bufferLogs.add(entry);
@@ -190,9 +217,10 @@ public class AdministracionController {
     }
 
     public void guardarLoteLogs() {
+
         if (bufferLogs.isEmpty()) return;
         if (currentSesion == null) return;
-
+        System.out.println("Vamos a guardar logs");
         long timestampFinMillis = System.currentTimeMillis();
         try {
             String jsonLote = mapper.writeValueAsString(bufferLogs);

@@ -15,8 +15,10 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
 import java.util.function.Consumer;
-
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -30,8 +32,6 @@ public class AdministracionPanel extends JPanel {
 
     private final AdministracionController controller;
     private Runnable onVolverALista;
-
-
 
     @Autowired
     public AdministracionPanel(AdministracionController controller) {
@@ -64,37 +64,33 @@ public class AdministracionPanel extends JPanel {
         add(bottomPanel, BorderLayout.SOUTH);
 
         backButton.addActionListener(e -> volverAListaServidores());
-
         transferFileButton.addActionListener(e -> controller.seleccionarYTransferirArchivo(this));
-
     }
 
+    /**
+     * Llama a controller.conectarAServidor y luego al callback con true/false.
+     */
     public void iniciarConexion(Servidor servidor, Consumer<Boolean> callback) {
-        // Guardamos el servidor que se quiere conectar
         this.currentServidor = servidor;
-
-        // Invocamos el método del controlador que admite callback
         controller.conectarAServidor(servidor, exito -> {
             if (!exito) {
-                // Si falló, mostramos error en este panel (opcional), y devolvemos false
                 mostrarError("No se pudo conectar a " + servidor.getDireccion() + ":" + servidor.getPuerto());
                 callback.accept(false);
             } else {
-                // Conexión exitosa: informamos al callback que puede mostrar la ventana
                 callback.accept(true);
             }
         });
     }
 
-
-
+    /**
+     * Actualiza la imagen en pantalla (desde EDT).
+     */
     public void actualizarImagen(BufferedImage img) {
         SwingUtilities.invokeLater(() -> {
             if (img == null) return;
 
             int panelWidth = imageLabel.getWidth();
             int panelHeight = imageLabel.getHeight();
-
             if (panelWidth <= 0) panelWidth = 800;
             if (panelHeight <= 0) panelHeight = 600;
 
@@ -116,11 +112,12 @@ public class AdministracionPanel extends JPanel {
         });
     }
 
-
+    /**
+     * Agrega un renglón de log en el JTextPane (desde EDT).
+     */
     public void log(String prefix, String msg) {
         SwingUtilities.invokeLater(() -> {
             StyledDocument doc = logArea.getStyledDocument();
-
             Style style = logArea.addStyle("default", null);
 
             if ("ERROR".equals(prefix)) {
@@ -133,7 +130,6 @@ public class AdministracionPanel extends JPanel {
 
             try {
                 doc.insertString(doc.getLength(), String.format("[%s] %s%n", prefix, msg), style);
-
                 if (autoScrollCheckBox.isSelected()) {
                     logArea.setCaretPosition(doc.getLength());
                 }
@@ -153,12 +149,11 @@ public class AdministracionPanel extends JPanel {
 
     public void volverAListaServidores() {
         if (currentServidor != null) {
-            System.out.println(currentServidor);
+            controller.guardarLoteLogs();
             String host = currentServidor.getDireccion();
             int port = Integer.parseInt(currentServidor.getPuerto());
             controller.desconectar(host, port);
         }
-
         if (onVolverALista != null) onVolverALista.run();
     }
 
@@ -166,4 +161,21 @@ public class AdministracionPanel extends JPanel {
         this.onVolverALista = callback;
     }
 
+    // ——— Estos métodos se invocan desde AdministracionController.actualizar() ———
+
+    /**
+     * Recibe un mensaje de texto JSON parseado y el raw. El controlador llama a esto
+     * cuando llega un Evento.TEXT. Debe mostrar el log o lo que corresponda.
+     */
+
+    /**
+     * Recibe una BufferedImage. El controlador llama a esto cuando llega un Evento.BINARY.
+     */
+    public void recibirImagen(BufferedImage img) {
+        if (img != null) {
+            actualizarImagen(img);
+        } else {
+            mostrarError("Imagen recibida no válida");
+        }
+    }
 }

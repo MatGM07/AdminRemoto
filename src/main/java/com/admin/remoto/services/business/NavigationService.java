@@ -22,7 +22,7 @@ public class NavigationService {
                 if (!exito) {
                     // En lugar de diálogo modal, mostramos el error en el statusLabel de ServidorListPanel
                     if (parent instanceof ServidorListPanel) {
-                        ((ServidorListPanel) parent).mostrarError("Ya existe una conexión con ese servidor.");
+                        ((ServidorListPanel) parent).mostrarError("Error al realizar la conexion.");
                     }
                     return;
                 }
