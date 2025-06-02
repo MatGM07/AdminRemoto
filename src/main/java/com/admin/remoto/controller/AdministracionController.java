@@ -2,14 +2,12 @@ package com.admin.remoto.controller;
 
 
 import com.admin.remoto.Observador.Observador;
-import com.admin.remoto.services.business.ConexionService;
-import com.admin.remoto.services.business.FileSelector;
-import com.admin.remoto.services.business.FileSender;
-import com.admin.remoto.services.business.SessionManager;
+import com.admin.remoto.services.business.*;
 import com.admin.remoto.models.*;
 import com.admin.remoto.services.panel.AdministracionService;
 import com.admin.remoto.services.persistence.LogLoteService;
 import com.admin.remoto.services.persistence.SesionService;
+import com.admin.remoto.services.persistence.VideoService;
 import com.admin.remoto.swing.AdministracionPanel;
 import com.admin.remoto.websocket.Evento;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -33,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -57,11 +56,14 @@ public class AdministracionController implements Observador<Evento, Void> {
     private final SesionService sesionService;
     private final FileSender fileSender;
     private final FileSelector fileSelector;
+    private VideoService videoService;
     private Sesion currentSesion;
     private Servidor currentServidor;
+    private volatile CountDownLatch esperaVideoGuardado;
+
 
     @Autowired
-    public AdministracionController(AdministracionService administracionService, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender, FileSelector fileSelector, ConexionService conexionService) {
+    public AdministracionController(VideoService videoService, AdministracionService administracionService, LogLoteService logLoteService, SessionManager sessionManager, SesionService sesionService, FileSender fileSender, FileSelector fileSelector, ConexionService conexionService) {
         this.conexionService = conexionService;
         this.administracionService = administracionService;
         this.logLoteService = logLoteService;
@@ -69,8 +71,11 @@ public class AdministracionController implements Observador<Evento, Void> {
         this.sesionService = sesionService;
         this.fileSender = fileSender;
         this.fileSelector = fileSelector;
+        this.videoService = videoService;
 
         scheduler.scheduleAtFixedRate(this::guardarLoteLogs, 30, 30, TimeUnit.SECONDS);
+        videoService.agregarObservador(this);
+
     }
 
     public void setAdministracionPanel(AdministracionPanel panel) {
@@ -139,13 +144,27 @@ public class AdministracionController implements Observador<Evento, Void> {
             @Override
             protected Void doInBackground() {
                 if (currentSesion != null) {
+                    // 1) Crear un latch que espera 1 evento
+                    esperaVideoGuardado = new CountDownLatch(1);
+
+                    try {
+                        // 2) Esperar hasta que el video sea guardado (máx 10 segundos)
+                        boolean recibido = esperaVideoGuardado.await(10, TimeUnit.SECONDS);
+                        if (!recibido) {
+                            System.out.println(">>> [WARN] Tiempo de espera agotado para el guardado del video.");
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt(); // buena práctica
+                        System.out.println(">>> [ERROR] Interrumpido mientras esperaba por el evento de video.");
+                    }
+
+                    // 3) Luego de esperar, continuar desconectando
                     currentSesion.setFechaHoraFin(LocalDateTime.now());
                     sesionService.actualizar(currentSesion.getId(), currentSesion);
                     sessionManager.removeSesion(currentSesion);
                 }
-                // 1) Quitamos este controlador de los observadores de AdministracionService
+
                 administracionService.eliminarObservador(clave);
-                // 2) Cerramos WebSocket y devolvemos al pool
                 conexionService.disconnect(host, port);
                 return null;
             }
@@ -155,30 +174,39 @@ public class AdministracionController implements Observador<Evento, Void> {
 
     @Override
     public void actualizar(Evento evento, Void v) {
-
-        switch (evento.getTipo()) {
-            case OPEN -> panel.mostrarMensaje("Conexión abierta");
-            case TEXT -> {
-                System.out.println("EL LOG LLEGO AL CONTROLLER");
-                String msg = (String) evento.getContenido();
-                Map<String, String> datos = administracionService.procesarMensajeJson(msg);
-                recibirTexto(datos, msg);
-            }
-            case BINARY -> {
-                try {
-                    BufferedImage img = administracionService.procesarImagen((ByteBuffer) evento.getContenido());
-                    panel.recibirImagen(img);
-                } catch (IOException e) {
-                    panel.mostrarError("Error al procesar imagen: " + e.getMessage());
+        if (evento instanceof VideoEvento ve) {
+            if (ve.getTipoVideo() == VideoEvento.TipoVideo.GUARDADO && ve.getSesion() != null && ve.getSesion().getId().equals(currentSesion.getId())) {
+                System.out.println("Video guardado con ID: " + ve.getVideoId());
+                if (esperaVideoGuardado != null) {
+                    esperaVideoGuardado.countDown(); // libera el hilo que espera
                 }
             }
-            case CLOSE -> panel.mostrarMensaje("Conexión cerrada: " + evento.getContenido());
-            case ERROR -> {
-                Exception ex = (Exception) evento.getContenido();
-                panel.mostrarError("Error WebSocket: " + ex.getMessage());
-                ex.printStackTrace();
+        }else {
+            switch (evento.getTipo()) {
+                case OPEN -> panel.mostrarMensaje("Conexión abierta");
+                case TEXT -> {
+                    System.out.println("EL LOG LLEGO AL CONTROLLER");
+                    String msg = (String) evento.getContenido();
+                    Map<String, String> datos = administracionService.procesarMensajeJson(msg);
+                    recibirTexto(datos, msg);
+                }
+                case BINARY -> {
+                    try {
+                        BufferedImage img = administracionService.procesarImagen((ByteBuffer) evento.getContenido());
+                        panel.recibirImagen(img);
+                    } catch (IOException e) {
+                        panel.mostrarError("Error al procesar imagen: " + e.getMessage());
+                    }
+                }
+                case CLOSE -> panel.mostrarMensaje("Conexión cerrada: " + evento.getContenido());
+                case ERROR -> {
+                    Exception ex = (Exception) evento.getContenido();
+                    panel.mostrarError("Error WebSocket: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
             }
         }
+
     }
 
     public void mostrarMensaje(String mensaje) {
