@@ -31,7 +31,6 @@ public class ConexionService {
     private final AdministracionService administracionService;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    // Mapa para tener acceso al PooledWebSocketClient por clave (host:port)
     private final ConcurrentMap<String, PooledWebSocketClient> clientesEnUso = new ConcurrentHashMap<>();
 
     @Autowired
@@ -43,20 +42,13 @@ public class ConexionService {
         this.clientPool = clientPool;
     }
 
-    /**
-     * Abre la conexión WebSocket a host:port y le pasa un callback que reenvía
-     * cada evento a administracionService.recibirEventoPara(clave, evento).
-     */
     public void connect(String host, int port) throws Exception {
         String clave = host + ":" + port;
 
-        // Creamos un Consumer<Evento> que sabe a qué “clave” pertenece
         Consumer<Evento> reenvio = evento -> administracionService.recibirEventoPara(clave, evento);
 
-        // Pedimos un cliente del pool (o excepción si ya existe uno para esa clave)
         PooledWebSocketClient client = clientPool.borrowClient(host, port, reenvio);
 
-        // Conectamos en un hilo separado
         CompletableFuture<Boolean> connectionFuture = CompletableFuture.supplyAsync(() -> {
             try {
                 return client.connectBlocking();
@@ -71,14 +63,10 @@ public class ConexionService {
             throw new IOException("No se pudo establecer conexión con " + clave);
         }
 
-        // Solo si conectó correctamente, lo guardamos en uso
         clientesEnUso.put(clave, client);
         clientPool.marcarClienteComoEnUso(client, clave);
     }
 
-    /**
-     * Cierra la conexión WebSocket (si existe) para host:port y devuelve el cliente al pool.
-     */
     public void disconnect(String host, int port) {
         String clave = host + ":" + port;
         PooledWebSocketClient client = clientesEnUso.remove(clave);
@@ -92,7 +80,7 @@ public class ConexionService {
                     Thread.currentThread().interrupt();
                 }
                 clientPool.returnClient(client);
-                // También desvinculamos de AdministracionService para que no reciba más eventos
+
                 administracionService.eliminarObservador(clave);
             });
         }
