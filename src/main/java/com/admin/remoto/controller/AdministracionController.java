@@ -142,48 +142,39 @@ public class AdministracionController implements Observador<Evento, Void> {
     }
 
     public void desconectar(String host, int port) {
-        String clave = host + ":" + port;
-        new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() {
-                if (currentSesion != null) {
-                    solicitarVideo(host, port);
-                    esperaVideoGuardado = new CountDownLatch(1);
-
-                    try {
-                        // 2) Esperar hasta que el video sea guardado (máx 10 segundos)
-                        boolean recibido = esperaVideoGuardado.await(20, TimeUnit.SECONDS);
-                        if (!recibido) {
-                            System.out.println(">>> [WARN] Tiempo de espera agotado para el guardado del video.");
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt(); // buena práctica
-                        System.out.println(">>> [ERROR] Interrumpido mientras esperaba por el evento de video.");
-                    }
-
-                    // 3) Luego de esperar, continuar desconectando
-                    currentSesion.setFechaHoraFin(LocalDateTime.now());
-                    sesionService.actualizar(currentSesion.getId(), currentSesion);
-                    sessionManager.removeSesion(currentSesion);
-                }
-
-                administracionService.eliminarObservador(clave);
-                conexionService.disconnect(host, port);
-                return null;
-            }
-        }.execute();
+        desconectar(host, port, true);
     }
 
-    private void desconectarSinVideo(String host, int port) {
+    public void desconectarSinVideo(String host, int port) {
+        desconectar(host, port, false);
+    }
+
+    private void desconectar(String host, int port, boolean esperarVideo) {
         String clave = host + ":" + port;
+
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
                 if (currentSesion != null) {
+                    if (esperarVideo) {
+                        solicitarVideo(host, port);
+                        esperaVideoGuardado = new CountDownLatch(1);
+                        try {
+                            boolean recibido = esperaVideoGuardado.await(20, TimeUnit.SECONDS);
+                            if (!recibido) {
+                                System.out.println(">>> [WARN] Tiempo de espera agotado para el guardado del video.");
+                            }
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            System.out.println(">>> [ERROR] Interrumpido mientras esperaba por el evento de video.");
+                        }
+                    }
+
                     currentSesion.setFechaHoraFin(LocalDateTime.now());
                     sesionService.actualizar(currentSesion.getId(), currentSesion);
                     sessionManager.removeSesion(currentSesion);
                 }
+
                 administracionService.eliminarObservador(clave);
                 conexionService.disconnect(host, port);
                 return null;
@@ -202,7 +193,7 @@ public class AdministracionController implements Observador<Evento, Void> {
 
                 System.out.println("Video guardado con ID: " + ve.getVideoId());
                 if (esperaVideoGuardado != null) {
-                    esperaVideoGuardado.countDown(); // libera el hilo que espera
+                    esperaVideoGuardado.countDown();
                 }
             }
         }else {
@@ -303,6 +294,5 @@ public class AdministracionController implements Observador<Evento, Void> {
         System.out.println(">>> [DEBUG] Número de sesiones EN EL CONTROLLER activas: " + sesionesActivas.size());
         conexionService.solicitarVideoDesdeCliente(host, port);
     }
-
 
 }
