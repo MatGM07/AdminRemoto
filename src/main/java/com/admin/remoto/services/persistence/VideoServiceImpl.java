@@ -64,9 +64,7 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
     @Override
     @Transactional
     public Video saveVideo(MultipartFile file) throws Exception {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("El archivo está vacío o es null.");
-        }
+        validarArchivo(file);
 
         String originalName = file.getOriginalFilename();
         long sizeBytes = file.getSize();
@@ -149,5 +147,12 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
         if (direccion == null) return "";
         if (direccion.equalsIgnoreCase("localhost")) return "127.0.0.1";
         return direccion;
+    }
+
+    private void validarArchivo(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            System.out.println(">>> [WARN] Validación fallida: archivo vacío o null");
+            throw new IllegalArgumentException("El archivo está vacío o es null.");
+        }
     }
 }
