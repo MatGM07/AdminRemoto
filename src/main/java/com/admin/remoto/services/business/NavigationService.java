@@ -14,13 +14,11 @@ public class NavigationService {
     public void abrirVentanaConexion(JPanel parent, Servidor servidor, Supplier<AdministracionPanel> proveedorAdminPanel) {
         AdministracionPanel adminPanel = proveedorAdminPanel.get();
 
-        // Iniciar la conexión *antes* de mostrar la ventana
         adminPanel.iniciarConexion(servidor, exito -> {
-            // Ya estamos en el EDT porque iniciarConexion termina invocando callback desde done() de SwingWorker,
-            // pero aún así envuelvo en invokeLater para unificar
+
             SwingUtilities.invokeLater(() -> {
                 if (!exito) {
-                    // En lugar de diálogo modal, mostramos el error en el statusLabel de ServidorListPanel
+       
                     if (parent instanceof ServidorListPanel) {
                         ((ServidorListPanel) parent).mostrarError("Error al realizar la conexion.");
                     }

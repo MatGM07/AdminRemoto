@@ -86,8 +86,9 @@ public class AdministracionController implements Observador<Evento, Void> {
         String host = servidor.getDireccion();
         int port = Integer.parseInt(servidor.getPuerto());
         String clave = host + ":" + port;
-
+        System.out.println("Dirección ocupada? " + host + ":" + port + " -> " + sessionManager.direccionOcupada(host, port));
         if (sessionManager.direccionOcupada(host, port)) {
+
             callback.accept(false);
             return;
         }
@@ -139,7 +140,6 @@ public class AdministracionController implements Observador<Evento, Void> {
 
     public void desconectar(String host, int port) {
         String clave = host + ":" + port;
-
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() {
@@ -164,6 +164,23 @@ public class AdministracionController implements Observador<Evento, Void> {
                     sessionManager.removeSesion(currentSesion);
                 }
 
+                administracionService.eliminarObservador(clave);
+                conexionService.disconnect(host, port);
+                return null;
+            }
+        }.execute();
+    }
+
+    private void desconectarSinVideo(String host, int port) {
+        String clave = host + ":" + port;
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                if (currentSesion != null) {
+                    currentSesion.setFechaHoraFin(LocalDateTime.now());
+                    sesionService.actualizar(currentSesion.getId(), currentSesion);
+                    sessionManager.removeSesion(currentSesion);
+                }
                 administracionService.eliminarObservador(clave);
                 conexionService.disconnect(host, port);
                 return null;
@@ -202,7 +219,12 @@ public class AdministracionController implements Observador<Evento, Void> {
                         panel.mostrarError("Error al procesar imagen: " + e.getMessage());
                     }
                 }
-                case CLOSE -> panel.mostrarMensaje("Conexión cerrada: " + evento.getContenido());
+                case CLOSE -> {
+                    panel.mostrarMensaje("Conexión cerrada: " + evento.getContenido());
+                    if (currentServidor != null) {
+                        desconectarSinVideo(currentServidor.getDireccion(), Integer.parseInt(currentServidor.getPuerto()));
+                    }
+                }
                 case ERROR -> {
                     Exception ex = (Exception) evento.getContenido();
                     panel.mostrarError("Error WebSocket: " + ex.getMessage());
@@ -258,15 +280,13 @@ public class AdministracionController implements Observador<Evento, Void> {
             String jsonLote = mapper.writeValueAsString(bufferLogs);
             Usuario current = sessionManager.getUsuario();
 
-            LogLote lote = new LogLote();
-            lote.setTimestampInicio(millisToDateTime(timestampInicioLote));
-            lote.setTimestampFin(millisToDateTime(timestampFinMillis));
-            lote.setUsuario(current);
-            lote.setContenidoJson(jsonLote);
-
-            // Aquí ya no uso sessionManager.getSesion(), sino la que me pasaron
-            lote.setSesion(currentSesion);
-
+            LogLote lote = LogLote.Builder.builder()
+                    .withTimestampInicio(millisToDateTime(timestampInicioLote))
+                    .withTimestampFin(millisToDateTime(timestampFinMillis))
+                    .withUsuario(current)
+                    .withSesion(currentSesion)
+                    .withContenidoJson(jsonLote)
+                    .build();
             logLoteService.guardarLote(lote);
 
             bufferLogs.clear();
@@ -302,4 +322,6 @@ public class AdministracionController implements Observador<Evento, Void> {
         System.out.println(">>> [DEBUG] Número de sesiones EN EL CONTROLLER activas: " + sesionesActivas.size());
         conexionService.solicitarVideoDesdeCliente(host, port);
     }
+
+
 }

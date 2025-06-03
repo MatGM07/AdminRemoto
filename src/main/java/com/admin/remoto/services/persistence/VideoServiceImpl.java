@@ -6,6 +6,7 @@ import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.models.Servidor;
 import com.admin.remoto.models.Sesion;
 import com.admin.remoto.models.Video;
+import com.admin.remoto.models.VideoCacheMetadata;
 import com.admin.remoto.repositories.VideoRepositorio;
 import com.admin.remoto.services.business.SessionManager;
 import com.admin.remoto.services.business.VideoEvento;
@@ -20,12 +21,17 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.sql.DataSource;
 
 @Service
 public class VideoServiceImpl implements VideoService, Observable<Evento, Void> {
@@ -34,13 +40,16 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
     private final List<Observador<Evento, Void>> observadores = new ArrayList<>();
     private final HttpServletRequest request;
     private final SessionManager sessionManager;
-
+    private final DataSource dataSource;
+    private final VideoCacheMetadataRepository metadataRepository;
 
     @Autowired
-    public VideoServiceImpl(VideoRepositorio videoRepository, HttpServletRequest request, SessionManager sessionManager) {
+    public VideoServiceImpl(VideoRepositorio videoRepository, HttpServletRequest request, SessionManager sessionManager, DataSource dataSource, VideoCacheMetadataRepository videoCacheMetadataRepository) {
         this.request = request;
         this.videoRepository = videoRepository;
         this.sessionManager = sessionManager;
+        this.dataSource = dataSource;
+        this.metadataRepository = videoCacheMetadataRepository;
     }
 
     @Override
@@ -72,10 +81,8 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
         String timestamp = now.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         String storedFileName = timestamp + "_" + originalName;
 
-        // Lee los bytes primero (antes de transferir el archivo temporal)
         byte[] data = file.getBytes();
 
-        // Guardar en disco
         File uploadsDir = new File(System.getProperty("user.dir"), "videos");
         if (!uploadsDir.exists()) {
             boolean creada = uploadsDir.mkdirs();
@@ -128,6 +135,12 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
 
         System.out.println("sesion del vidio guardado: "+videoEntity.getSesion());
         Video saved = videoRepository.save(videoEntity);
+
+        metadataRepository.save(new VideoCacheMetadata(
+                videoEntity.getSizeBytes(),
+                videoEntity.getUploadTime(),
+                videoEntity.getSesion() != null ? videoEntity.getSesion().getId() : null
+        ));
 
         notificarObservadores(new VideoEvento(saved.getId(), videoEntity.getSesion()), null);
 

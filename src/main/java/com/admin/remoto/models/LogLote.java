@@ -22,10 +22,10 @@ public class LogLote {
     @JoinColumn(name = "sesion_id")
     private Sesion sesion;
 
-
     @Lob
-    @Column(columnDefinition = "TEXT") // o JSON si tu MySQL lo permite
+    @Column(columnDefinition = "TEXT")
     private String contenidoJson;
+
 
     public Long getId() {
         return id;
@@ -50,7 +50,6 @@ public class LogLote {
     public void setTimestampFin(LocalDateTime timestampFin) {
         this.timestampFin = timestampFin;
     }
-    
 
     public String getContenidoJson() {
         return contenidoJson;
@@ -74,5 +73,47 @@ public class LogLote {
 
     public void setSesion(Sesion sesion) {
         this.sesion = sesion;
+    }
+
+    public static class Builder {
+        private final LogLote logLote;
+
+        private Builder() {
+            this.logLote = new LogLote();
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public Builder withTimestampInicio(LocalDateTime timestampInicio) {
+            logLote.setTimestampInicio(timestampInicio);
+            return this;
+        }
+
+        public Builder withTimestampFin(LocalDateTime timestampFin) {
+            logLote.setTimestampFin(timestampFin);
+            return this;
+        }
+
+        public Builder withUsuario(Usuario usuario) {
+            logLote.setUsuario(usuario);
+            return this;
+        }
+
+        public Builder withSesion(Sesion sesion) {
+            logLote.setSesion(sesion);
+            return this;
+        }
+
+        public Builder withContenidoJson(String contenidoJson) {
+            logLote.setContenidoJson(contenidoJson);
+            return this;
+        }
+
+        public LogLote build() {
+            // Aquí puedes agregar validaciones si lo deseas (ej: campos obligatorios)
+            return logLote;
+        }
     }
 }

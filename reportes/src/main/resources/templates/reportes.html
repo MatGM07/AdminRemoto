@@ -67,11 +67,19 @@
 
 <div th:if="${videoBase64 != null}">
     <h3>Video de la sesión</h3>
+
+    <div th:if="${videoCacheUploadTime != null}">
+        <p>Última actualización:
+            <span th:text="${#temporals.format(videoCacheUploadTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+        </p>
+    </div>
+
     <video width="640" height="360" controls>
         <source th:src="'data:video/mp4;base64,' + ${videoBase64}" type="video/mp4" />
         Tu navegador no soporta el tag de video.
     </video>
 </div>
+
 <br><br>
 
 <div th:each="logList, loteStat : ${logsParseados}">
