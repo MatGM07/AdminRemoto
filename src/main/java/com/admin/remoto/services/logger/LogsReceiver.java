@@ -1,4 +1,4 @@
-package com.admin.remoto.services.business;
+package com.admin.remoto.services.logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

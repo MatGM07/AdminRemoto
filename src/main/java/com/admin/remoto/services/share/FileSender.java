@@ -1,4 +1,4 @@
-package com.admin.remoto.services.business;
+package com.admin.remoto.services.share;
 
 import com.admin.remoto.models.Servidor;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
@@ -8,7 +8,6 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;

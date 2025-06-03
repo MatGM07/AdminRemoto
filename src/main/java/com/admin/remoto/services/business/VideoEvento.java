@@ -1,7 +1,7 @@
 package com.admin.remoto.services.business;
 
 import com.admin.remoto.models.Sesion;
-import com.admin.remoto.websocket.Evento;
+import com.admin.remoto.services.connection.Evento;
 
 
 public class VideoEvento extends Evento {
@@ -9,7 +9,7 @@ public class VideoEvento extends Evento {
 
     private final Long videoId;
     private final TipoVideo tipoVideo;
-    private final Sesion sesion;  // ✅ Nueva propiedad
+    private final Sesion sesion;
 
     public VideoEvento(Long videoId, Sesion sesion) {
         super(Evento.Tipo.BINARY, videoId);

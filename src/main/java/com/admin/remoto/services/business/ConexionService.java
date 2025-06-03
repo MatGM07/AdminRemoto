@@ -1,25 +1,13 @@
 package com.admin.remoto.services.business;
 
-import com.admin.remoto.Observador.Observable;
-import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.services.panel.AdministracionService;
-import com.admin.remoto.websocket.Evento;
-import com.admin.remoto.models.Sesion;
-import com.admin.remoto.services.persistence.SesionService;
-import com.admin.remoto.websocket.PooledWebSocketClient;
-import com.admin.remoto.websocket.WebSocketClientPool;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
+import com.admin.remoto.services.connection.Evento;
+import com.admin.remoto.services.connection.PooledWebSocketClient;
+import com.admin.remoto.services.connection.WebSocketClientPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 

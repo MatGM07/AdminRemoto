@@ -1,6 +1,6 @@
 package com.admin.remoto.command;
 
-import com.admin.remoto.swing.LoginPanel;
+import com.admin.remoto.ui.LoginPanel;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.swing.*;

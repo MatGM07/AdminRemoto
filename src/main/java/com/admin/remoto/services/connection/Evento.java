@@ -1,4 +1,4 @@
-package com.admin.remoto.websocket;
+package com.admin.remoto.services.connection;
 
 public class Evento {
     public enum Tipo {

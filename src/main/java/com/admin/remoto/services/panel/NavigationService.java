@@ -1,8 +1,8 @@
-package com.admin.remoto.services.business;
+package com.admin.remoto.services.panel;
 
 import com.admin.remoto.models.Servidor;
-import com.admin.remoto.swing.AdministracionPanel;
-import com.admin.remoto.swing.ServidorListPanel;
+import com.admin.remoto.ui.AdministracionPanel;
+import com.admin.remoto.ui.ServidorListPanel;
 import org.springframework.stereotype.Component;
 
 import javax.swing.*;
@@ -18,7 +18,7 @@ public class NavigationService {
 
             SwingUtilities.invokeLater(() -> {
                 if (!exito) {
-       
+
                     if (parent instanceof ServidorListPanel) {
                         ((ServidorListPanel) parent).mostrarError("Error al realizar la conexion.");
                     }

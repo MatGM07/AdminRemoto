@@ -1,6 +1,6 @@
 package com.admin.remoto.command;
 
-import com.admin.remoto.swing.ServidorListPanel;
+import com.admin.remoto.ui.ServidorListPanel;
 
 import javax.swing.*;
 import java.awt.*;

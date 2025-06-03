@@ -1,4 +1,4 @@
-package com.admin.remoto.models;
+package com.admin.remoto.services.logger;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

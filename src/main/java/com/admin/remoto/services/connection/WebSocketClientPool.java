@@ -1,4 +1,4 @@
-package com.admin.remoto.websocket;
+package com.admin.remoto.services.connection;
 
 import org.springframework.stereotype.Component;
 

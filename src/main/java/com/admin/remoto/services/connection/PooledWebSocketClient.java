@@ -1,4 +1,4 @@
-package com.admin.remoto.websocket;
+package com.admin.remoto.services.connection;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;

@@ -1,4 +1,4 @@
-package com.admin.remoto.services.business;
+package com.admin.remoto.services.share;
 
 import org.springframework.stereotype.Service;
 

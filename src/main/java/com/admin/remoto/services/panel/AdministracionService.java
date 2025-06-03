@@ -1,11 +1,9 @@
 package com.admin.remoto.services.panel;
 
 import com.admin.remoto.Observador.Observador;
-import com.admin.remoto.controller.AdministracionController;
-import com.admin.remoto.websocket.Evento;
-import com.admin.remoto.services.business.ConexionService;
-import com.admin.remoto.services.business.ImageReceiver;
-import com.admin.remoto.services.business.LogsReceiver;
+import com.admin.remoto.services.connection.Evento;
+import com.admin.remoto.services.render.ImageReceiver;
+import com.admin.remoto.services.logger.LogsReceiver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +13,6 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 
 @Service
 public class AdministracionService {

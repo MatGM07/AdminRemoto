@@ -30,7 +30,7 @@
 Command Line: -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -Dcom.sun.management.jmxremote -Dspring.jmx.enabled=true -Dspring.liveBeansView.mbeanDomain -Dspring.application.admin.enabled=true -Dmanagement.endpoints.jmx.exposure.include=* -javaagent:I:\JAJAJAVA\IntelliJ IDEA 2024.1.1\lib\idea_rt.jar=59022:I:\JAJAJAVA\IntelliJ IDEA 2024.1.1\bin -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 com.admin.remoto.RemotoApplication
 
 Host: Intel(R) Core(TM) i7 CPU         930  @ 2.80GHz, 8 cores, 15G,  Windows 10 , 64 bit Build 19041 (10.0.19041.5794)
-Time: Sun Jun  1 19:27:58 2025 Hora est. Pacífico, Sudamérica elapsed time: 11397.831090 seconds (0d 3h 9m 57s)
+Time: Sun Jun  1 19:27:58 2025 Hora est. Pacï¿½fico, Sudamï¿½rica elapsed time: 11397.831090 seconds (0d 3h 9m 57s)
 
 ---------------  T H R E A D  ---------------
 
@@ -64,9 +64,9 @@ v  ~RuntimeStub::new_type_array Runtime1 stub 0x000002b40ad31776
 J 8298 c1 java.awt.image.Raster.createPackedRaster(III[ILjava/awt/Point;)Ljava/awt/image/WritableRaster; java.desktop@22.0.1 (103 bytes) @ 0x000002b40af7c4cb [0x000002b40af7bdc0+0x000000000000070b]
 J 8297 c1 java.awt.image.DirectColorModel.createCompatibleWritableRaster(II)Ljava/awt/image/WritableRaster; java.desktop@22.0.1 (114 bytes) @ 0x000002b40adc984c [0x000002b40adc9600+0x000000000000024c]
 J 8296 c1 java.awt.image.BufferedImage.<init>(III)V java.desktop@22.0.1 (913 bytes) @ 0x000002b40ad56024 [0x000002b40ad54780+0x00000000000018a4]
-J 8396 c1 com.admin.remoto.services.business.EscaladoService.scaleImage(Ljava/awt/image/BufferedImage;II)Ljava/awt/image/BufferedImage; (69 bytes) @ 0x000002b40afa33d4 [0x000002b40afa3320+0x00000000000000b4]
-J 8395 c1 com.admin.remoto.swing.AdministracionPanel.lambda$actualizarImagen$3(Ljava/awt/image/BufferedImage;)V (121 bytes) @ 0x000002b40b198964 [0x000002b40b198860+0x0000000000000104]
-J 8394 c1 com.admin.remoto.swing.AdministracionPanel$$Lambda+0x000002b418b1c458.run()V (12 bytes) @ 0x000002b40afa48fc [0x000002b40afa48a0+0x000000000000005c]
+J 8396 c1 com.admin.remoto.services.render.EscaladoService.scaleImage(Ljava/awt/image/BufferedImage;II)Ljava/awt/image/BufferedImage; (69 bytes) @ 0x000002b40afa33d4 [0x000002b40afa3320+0x00000000000000b4]
+J 8395 c1 com.admin.remoto.ui.AdministracionPanel.lambda$actualizarImagen$3(Ljava/awt/image/BufferedImage;)V (121 bytes) @ 0x000002b40b198964 [0x000002b40b198860+0x0000000000000104]
+J 8394 c1 com.admin.remoto.ui.AdministracionPanel$$Lambda+0x000002b418b1c458.run()V (12 bytes) @ 0x000002b40afa48fc [0x000002b40afa48a0+0x000000000000005c]
 J 6655 c1 java.awt.event.InvocationEvent.dispatch()V java.desktop@22.0.1 (69 bytes) @ 0x000002b40b27216c [0x000002b40b271fe0+0x000000000000018c]
 J 6504 c1 java.awt.EventQueue.dispatchEventImpl(Ljava/awt/AWTEvent;Ljava/lang/Object;)V java.desktop@22.0.1 (139 bytes) @ 0x000002b40b2ae244 [0x000002b40b2adb20+0x0000000000000724]
 J 6503 c1 java.awt.EventQueue$4.run()Ljava/lang/Void; java.desktop@22.0.1 (60 bytes) @ 0x000002b40b2aef04 [0x000002b40b2aee60+0x00000000000000a4]

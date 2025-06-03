@@ -1,9 +1,9 @@
-package com.admin.remoto.swing;
+package com.admin.remoto.ui;
 
 import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.controller.ServidorListController;
 import com.admin.remoto.models.Servidor;
-import com.admin.remoto.services.business.NavigationService;
+import com.admin.remoto.services.panel.NavigationService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.function.Consumer;
 
 @Component
 public class ServidorListPanel extends JPanel implements Observador<String, Object> {

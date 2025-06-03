@@ -30,7 +30,7 @@
 Command Line: -XX:TieredStopAtLevel=1 -Dspring.output.ansi.enabled=always -Dcom.sun.management.jmxremote -Dspring.jmx.enabled=true -Dspring.liveBeansView.mbeanDomain -Dspring.application.admin.enabled=true -Dmanagement.endpoints.jmx.exposure.include=* -javaagent:I:\JAJAJAVA\IntelliJ IDEA 2024.1.1\lib\idea_rt.jar=60488:I:\JAJAJAVA\IntelliJ IDEA 2024.1.1\bin -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 com.admin.remoto.RemotoApplication
 
 Host: Intel(R) Core(TM) i7 CPU         930  @ 2.80GHz, 8 cores, 15G,  Windows 10 , 64 bit Build 19041 (10.0.19041.5794)
-Time: Sun Jun  1 19:32:51 2025 Hora est. Pacífico, Sudamérica elapsed time: 85.662038 seconds (0d 0h 1m 25s)
+Time: Sun Jun  1 19:32:51 2025 Hora est. Pacï¿½fico, Sudamï¿½rica elapsed time: 85.662038 seconds (0d 0h 1m 25s)
 
 ---------------  T H R E A D  ---------------
 
@@ -72,7 +72,7 @@ J 7949 c1 javax.imageio.ImageIO.read(Ljava/io/InputStream;)Ljava/awt/image/Buffe
 J 7843 c1 com.admin.remoto.controller.AdministracionController.actualizar(Lcom/admin/remoto/websocket/Evento;Ljava/lang/Void;)V (189 bytes) @ 0x000001f9d9c73d2c [0x000001f9d9c73a60+0x00000000000002cc]
 J 7842 c1 com.admin.remoto.controller.AdministracionController.actualizar(Ljava/lang/Object;Ljava/lang/Object;)V (13 bytes) @ 0x000001f9d9d1d864 [0x000001f9d9d1d7c0+0x00000000000000a4]
 J 7839 c1 com.admin.remoto.services.business.ConexionService$$Lambda+0x000001f981aafa18.accept(Ljava/lang/Object;)V (16 bytes) @ 0x000001f9d9d1dcf4 [0x000001f9d9d1dbc0+0x0000000000000134]
-J 7948 c1 com.admin.remoto.websocket.PooledWebSocketClient.onMessage(Ljava/nio/ByteBuffer;)V (28 bytes) @ 0x000001f9d9db075c [0x000001f9d9db0640+0x000000000000011c]
+J 7948 c1 com.admin.remoto.services.connection.PooledWebSocketClient.onMessage(Ljava/nio/ByteBuffer;)V (28 bytes) @ 0x000001f9d9db075c [0x000001f9d9db0640+0x000000000000011c]
 J 7851 c1 org.java_websocket.drafts.Draft_6455.processFrame(Lorg/java_websocket/WebSocketImpl;Lorg/java_websocket/framing/Framedata;)V (187 bytes) @ 0x000001f9d9afba14 [0x000001f9d9afb760+0x00000000000002b4]
 J 7208 c1 org.java_websocket.WebSocketImpl.decodeFrames(Ljava/nio/ByteBuffer;)V (223 bytes) @ 0x000001f9d9c20d2c [0x000001f9d9c20b60+0x00000000000001cc]
 J 7207 c1 org.java_websocket.WebSocketImpl.decode(Ljava/nio/ByteBuffer;)V (192 bytes) @ 0x000001f9d995eee4 [0x000001f9d995ea60+0x0000000000000484]

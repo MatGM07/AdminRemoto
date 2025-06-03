@@ -2,10 +2,8 @@ package com.admin.remoto.services.persistence;
 
 
 import com.admin.remoto.Observador.Observable;
-import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.models.Video;
-import com.admin.remoto.services.business.VideoEvento;
-import com.admin.remoto.websocket.Evento;
+import com.admin.remoto.services.connection.Evento;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface VideoService extends Observable<Evento, Void> {

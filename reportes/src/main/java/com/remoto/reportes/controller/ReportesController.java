@@ -55,7 +55,6 @@ public class ReportesController {
 
         model.addAttribute("logsParseados", logsParseados);
 
-        // Video en Base64 directo
         List<Video> videos = videoService.obtenerPorSesionId(idSesion);
         if (!videos.isEmpty()) {
             Video video = videos.get(0);
@@ -63,7 +62,6 @@ public class ReportesController {
             model.addAttribute("videoBase64", base64Video);
         }
 
-        // Metadata opcional
         Optional<VideoCacheMetadata> metadata = videoService.obtenerCacheMetadataPorSesionId(idSesion);
         metadata.ifPresent(meta -> {
             model.addAttribute("videoCacheSize", meta.getSizeBytes());

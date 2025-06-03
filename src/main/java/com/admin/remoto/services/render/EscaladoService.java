@@ -1,4 +1,4 @@
-package com.admin.remoto.services.business;
+package com.admin.remoto.services.render;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

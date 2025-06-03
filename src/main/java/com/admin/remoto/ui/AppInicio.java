@@ -1,4 +1,4 @@
-package com.admin.remoto.swing;
+package com.admin.remoto.ui;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

@@ -1,8 +1,8 @@
-package com.admin.remoto.swing;
+package com.admin.remoto.ui;
 
 import com.admin.remoto.controller.AdministracionController;
 import com.admin.remoto.models.Servidor;
-import com.admin.remoto.services.business.EscaladoService;
+import com.admin.remoto.services.render.EscaladoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -15,9 +15,6 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
 import java.util.function.Consumer;
 
 @Component

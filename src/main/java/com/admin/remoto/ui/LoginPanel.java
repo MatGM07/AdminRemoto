@@ -1,4 +1,4 @@
-package com.admin.remoto.swing;
+package com.admin.remoto.ui;
 
 import com.admin.remoto.Observador.Observador;
 import com.admin.remoto.controller.LoginController;
