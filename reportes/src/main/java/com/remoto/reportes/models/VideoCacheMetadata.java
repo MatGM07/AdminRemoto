@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "video_cache_metadata")
-@org.hibernate.annotations.Immutable // Es opcional si no se va a modificar directamente
+@org.hibernate.annotations.Immutable
 public class VideoCacheMetadata {
 
     @Id

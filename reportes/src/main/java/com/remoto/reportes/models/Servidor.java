@@ -14,7 +14,7 @@ public class Servidor {
     private String puerto;
 
     @ManyToOne
-    @JoinColumn(name = "usuario_id") // Clave foránea que referencia al usuario creador
+    @JoinColumn(name = "usuario_id")
     private Usuario creador;
 
     public Servidor() {

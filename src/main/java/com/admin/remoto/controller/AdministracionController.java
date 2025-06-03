@@ -124,7 +124,7 @@ public class AdministracionController implements Observador<Evento, Void> {
                     administracionService.eliminarObservador(clave);
                     callback.accept(false);
                 } else {
-                    // Conexión WebSocket exitosa: creamos y guardamos Sesión
+
                     Sesion sesion = new Sesion();
                     sesion.setFechaHoraInicio(LocalDateTime.now());
                     sesion.setUsuario(sessionManager.getUsuario());
@@ -235,21 +235,12 @@ public class AdministracionController implements Observador<Evento, Void> {
                 }
             }
         }
-
     }
 
-    public void mostrarMensaje(String mensaje) {
-        panel.mostrarMensaje(mensaje);
-    }
-
-    public void mostrarError(String mensaje) {
-        panel.mostrarError(mensaje);
-    }
 
     public void recibirTexto(Map<String, String> jsonMsg, String raw) {
         System.out.println("ELLOG LLEGO AL CONTROLLER");
         if ("log".equals(jsonMsg.get("type"))) {
-
             String logMessage = jsonMsg.get("message");
             LogEntry entry = new LogEntry("log", logMessage);
             bufferLogs.add(entry);
@@ -257,19 +248,6 @@ public class AdministracionController implements Observador<Evento, Void> {
         } else {
             String now = timeFormat.format(new Date());
             panel.log("MSG " + now, raw);
-        }
-    }
-
-    public void recibirImagen(BufferedImage img) {
-        try {
-            if (img != null) {
-                panel.actualizarImagen(img);
-            } else {
-                mostrarError("Imagen recibida no válida");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            mostrarError("Error inesperado al actualizar imagen: " + e.getMessage());
         }
     }
 

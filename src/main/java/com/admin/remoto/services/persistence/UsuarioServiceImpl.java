@@ -38,14 +38,13 @@ public class UsuarioServiceImpl implements UsuarioService {
                     new UsernamePasswordAuthenticationToken(nombre, contraseña)
             );
 
-            // Si la autenticación es exitosa, puedes obtener detalles del usuario
+
             UserDetails userDetails = (UserDetails) auth.getPrincipal();
 
-            // Opcional: busca el usuario real en tu base de datos si necesitas su ID u otros datos
             return usuarioRepositorio.findByNombre(userDetails.getUsername()).get();
 
         } catch (AuthenticationException ex) {
-            return null; // Credenciales inválidas
+            return null;
         }
     }
 

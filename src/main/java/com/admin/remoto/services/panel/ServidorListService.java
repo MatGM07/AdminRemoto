@@ -13,15 +13,14 @@ import java.util.List;
 public class ServidorListService {
     private final ServidorService servidorService;
     private final SessionManager sessionManager;
-    private final AdministracionService administracionService;
+
 
     @Autowired
     public ServidorListService(ServidorService servidorService,
-                               SessionManager sessionManager,
-                               AdministracionService administracionService) {
+                               SessionManager sessionManager) {
         this.servidorService = servidorService;
         this.sessionManager = sessionManager;
-        this.administracionService = administracionService;
+
     }
 
     public List<Servidor> obtenerServidoresUsuario() {

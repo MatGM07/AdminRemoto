@@ -65,7 +65,6 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
         }
     }
 
-
     @Override
     @Transactional
     public Video saveVideo(MultipartFile file) throws Exception {
@@ -87,7 +86,7 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
 
         File destino = new File(uploadsDir, storedFileName);
         try {
-            file.transferTo(destino);  // transferir el archivo (luego de getBytes())
+            file.transferTo(destino);
             System.out.println(">>> [DEBUG] Archivo transferido exitosamente a: " + destino.getAbsolutePath());
         } catch (IOException ioEx) {
             System.out.println(">>> [ERROR] Error al guardar en disco: " + ioEx.getMessage());
@@ -132,11 +131,13 @@ public class VideoServiceImpl implements VideoService, Observable<Evento, Void> 
         System.out.println("sesion del vidio guardado: "+videoEntity.getSesion());
         Video saved = videoRepository.save(videoEntity);
 
-        metadataRepository.save(new VideoCacheMetadata(
-                videoEntity.getSizeBytes(),
-                videoEntity.getUploadTime(),
-                videoEntity.getSesion() != null ? videoEntity.getSesion().getId() : null
-        ));
+        metadataRepository.save(
+                new VideoCacheMetadata.Builder()
+                        .sizeBytes(videoEntity.getSizeBytes())
+                        .uploadTime(videoEntity.getUploadTime())
+                        .sesionId(videoEntity.getSesion() != null ? videoEntity.getSesion().getId() : null)
+                        .build()
+        );
 
         notificarObservadores(new VideoEvento(saved.getId(), videoEntity.getSesion()), null);
 

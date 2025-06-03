@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "video_cache_metadata")
-@org.hibernate.annotations.Immutable // Es opcional si no se va a modificar directamente
+@org.hibernate.annotations.Immutable
 public class VideoCacheMetadata {
 
     @Id
@@ -62,5 +62,30 @@ public class VideoCacheMetadata {
 
     public void setSesionId(Long sesionId) {
         this.sesionId = sesionId;
+    }
+
+    public static class Builder {
+        private Long sizeBytes;
+        private LocalDateTime uploadTime;
+        private Long sesionId;
+
+        public Builder sizeBytes(Long sizeBytes) {
+            this.sizeBytes = sizeBytes;
+            return this;
+        }
+
+        public Builder uploadTime(LocalDateTime uploadTime) {
+            this.uploadTime = uploadTime;
+            return this;
+        }
+
+        public Builder sesionId(Long sesionId) {
+            this.sesionId = sesionId;
+            return this;
+        }
+
+        public VideoCacheMetadata build() {
+            return new VideoCacheMetadata(sizeBytes, uploadTime, sesionId);
+        }
     }
 }

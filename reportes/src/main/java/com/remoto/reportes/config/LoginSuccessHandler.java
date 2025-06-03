@@ -31,10 +31,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         Usuario usuario = usuarioRepositorio.findByNombre(nombreUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado tras login"));
 
-        // Guardar en el singleton
         sesionManager.setUsuario(usuario);
 
-        // Redirigir a la página deseada
         response.sendRedirect("/home");
     }
 }
